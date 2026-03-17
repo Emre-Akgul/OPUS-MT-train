@@ -102,19 +102,19 @@ MARIAN_TRAIN_PREREQS = 	${TRAIN_SRC}.clean.${PRE_SRC}${TRAINSIZE}.gz \
 
 ## define validation and early-stopping parameters
 ## as well as pre-requisites for training the model
-## TODO: do we want to add valid-metrics "ce-mean-words" and "bleu-detok"?
+## validation metrics can be overridden with MARIAN_VALID_METRICS
 
 ifndef SKIP_VALIDATION
   MARIAN_TRAIN_PREREQS += ${DEV_SRC}.${PRE_SRC} ${DEV_TRG}.${PRE_TRG}
   MARIAN_STOP_CRITERIA = --early-stopping ${MARIAN_EARLY_STOPPING} \
         --valid-freq ${MARIAN_VALID_FREQ} \
         --valid-sets ${DEV_SRC}.${PRE_SRC} ${DEV_TRG}.${PRE_TRG} \
-        --valid-metrics perplexity \
+        --valid-metrics ${MARIAN_VALID_METRICS} \
         --valid-mini-batch ${MARIAN_VALID_MINI_BATCH} \
 	--valid-max-length 100 \
 	--valid-log ${WORKDIR}/${MODEL}.${MODELTYPE}.valid${NR}.log \
         --beam-size 6 --normalize 1 --allow-unk
-  MODEL_FINAL = ${WORKDIR}/${MODEL_BASENAME}.npz.best-perplexity.npz
+  MODEL_FINAL = ${WORKDIR}/${MODEL_BASENAME}.npz.best-${MARIAN_BEST_VALID_METRIC}.npz
 else
   MODEL_FINAL = ${WORKDIR}/${MODEL_BASENAME}.npz
 endif
@@ -323,6 +323,7 @@ endif
 		--sharding ${MARIAN_SHARDING} \
 		--overwrite --disp-first 10 --disp-label-counts \
 		--keep-best 2>>$(@:.done=.log) 1>&2
+	test -e $(@:.done=.npz) || test -e $(@:.done=.npz).best-${MARIAN_BEST_VALID_METRIC}.npz
 	touch $@
 
 
@@ -357,4 +358,3 @@ ${TRAIN_S2T}: ${TRAIN_ALG} ${TRAINDATA_SRC} ${TRAINDATA_TRG}
 
 ${TRAIN_T2S}: ${TRAIN_S2T}
 	echo "done!"
-

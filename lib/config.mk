@@ -523,7 +523,6 @@ MODEL_VALIDLOG   = ${MODEL}.${MODELTYPE}.valid${NR}.log
 MODEL_TRAINLOG   = ${MODEL}.${MODELTYPE}.train${NR}.log
 MODEL_START      = ${WORKDIR}/${MODEL_BASENAME}.npz
 MODEL_DONE       = ${WORKDIR}/${MODEL_BASENAME}.done
-MODEL_FINAL      = ${WORKDIR}/${MODEL_BASENAME}.npz.best-perplexity.npz
 MODEL_DECODER    = ${MODEL_FINAL}.decoder.yml
 
 ## quantized models
@@ -580,13 +579,15 @@ ifeq (${CONTINUE_EXISTING},1)
   MODEL_LATEST = $(firstword \
 	${shell ls -t 	${WORKDIR}/*${MODEL_VARIANT}.${PRE_SRC}-${PRE_TRG}.${subst -align,,${MODELTYPE}}.model[0-9].npz \
 			${WORKDIR}/*${MODEL_VARIANT}.${PRE_SRC}-${PRE_TRG}.${subst -align,,${MODELTYPE}}-align.model[0-9].npz \
-			${WORKDIR}/*${MODEL_VARIANT}.${PRE_SRC}-${PRE_TRG}.${subst -align,,${MODELTYPE}}.model[0-9].npz.best-perplexity.npz \
-			${WORKDIR}/*${MODEL_VARIANT}.${PRE_SRC}-${PRE_TRG}.${subst -align,,${MODELTYPE}}-align.model[0-9].npz.best-perplexity.npz \
+			${WORKDIR}/*${MODEL_VARIANT}.${PRE_SRC}-${PRE_TRG}.${subst -align,,${MODELTYPE}}.model[0-9].npz.best-${MARIAN_BEST_VALID_METRIC}.npz \
+			${WORKDIR}/*${MODEL_VARIANT}.${PRE_SRC}-${PRE_TRG}.${subst -align,,${MODELTYPE}}-align.model[0-9].npz.best-${MARIAN_BEST_VALID_METRIC}.npz \
 		2>/dev/null | grep -v 'tuned4' })
   MODEL_LATEST_VOCAB     = $(shell echo "${MODEL_LATEST}" | \
 		sed 's|\.${PRE_SRC}-${PRE_TRG}\..*$$|.${PRE_SRC}-${PRE_TRG}.vocab.yml|')
   MARIAN_EARLY_STOPPING = 15
 endif
+
+MODEL_FINAL      ?= ${WORKDIR}/${MODEL_BASENAME}.npz.best-${MARIAN_BEST_VALID_METRIC}.npz
 
 
 
@@ -602,9 +603,11 @@ TEST_COMPARISON  = ${TEST_TRANSLATION}.compare
 
 MARIAN_GPUS             ?= 0
 MARIAN_EXTRA            = 
-MARIAN_VALID_FREQ       ?= 10000
-MARIAN_SAVE_FREQ        ?= ${MARIAN_VALID_FREQ}
-MARIAN_DISP_FREQ        ?= ${MARIAN_VALID_FREQ}
+MARIAN_VALID_METRICS    ?= perplexity bleu chrf
+MARIAN_BEST_VALID_METRIC ?= $(firstword $(MARIAN_VALID_METRICS))
+MARIAN_VALID_FREQ       ?= 10000u
+MARIAN_SAVE_FREQ        ?= 10000u
+MARIAN_DISP_FREQ        ?= 10000u
 MARIAN_EARLY_STOPPING   ?= 10
 MARIAN_VALID_MINI_BATCH ?= 16
 MARIAN_MAXI_BATCH       ?= 500
@@ -771,7 +774,9 @@ ${WORKDIR}/${MODELCONFIG}:
 	  echo "# ${LANGPAIRSTR} training data bigger than ${LARGE_TRAINSIZE}" > $@; \
 	  echo "GPUJOB_HPC_MEM = 12g"       >> $@; \
 	  echo "GPUJOB_SUBMIT  = "         >> $@; \
-	  echo "MARIAN_VALID_FREQ = 2500"  >> $@; \
+	  echo "MARIAN_VALID_FREQ = 2500u"  >> $@; \
+	  echo "MARIAN_SAVE_FREQ = 2500u"  >> $@; \
+	  echo "MARIAN_DISP_FREQ = 2500u"  >> $@; \
 	  echo "SUBWORD_VOCAB_SIZE    = ${SUBWORD_VOCAB_SIZE}"    >> $@; \
 	  echo "DEVSIZE    = ${DEVSIZE}"    >> $@; \
 	  echo "TESTSIZE   = ${TESTSIZE}"   >> $@; \
@@ -780,7 +785,9 @@ ${WORKDIR}/${MODELCONFIG}:
 	  echo "# ${LANGPAIRSTR} training data bigger than ${MEDIUM_TRAINSIZE}" > $@; \
 	  echo "GPUJOB_HPC_MEM = 8g"       >> $@; \
 	  echo "GPUJOB_SUBMIT  = "         >> $@; \
-	  echo "MARIAN_VALID_FREQ = 2500"  >> $@; \
+	  echo "MARIAN_VALID_FREQ = 2500u"  >> $@; \
+	  echo "MARIAN_SAVE_FREQ = 2500u"  >> $@; \
+	  echo "MARIAN_DISP_FREQ = 2500u"  >> $@; \
 	  echo "MARIAN_WORKSPACE  = 10000" >> $@; \
 	  echo "SUBWORD_VOCAB_SIZE    = 12000"         >> $@; \
 	  echo "DEVSIZE    = ${DEVSIZE}"    >> $@; \
@@ -790,7 +797,9 @@ ${WORKDIR}/${MODELCONFIG}:
 	  echo "# ${LANGPAIRSTR} training data bigger than ${SMALL_TRAINSIZE}" > $@; \
 	  echo "GPUJOB_HPC_MEM = 4g"       >> $@; \
 	  echo "GPUJOB_SUBMIT  = "         >> $@; \
-	  echo "MARIAN_VALID_FREQ = 1000"  >> $@; \
+	  echo "MARIAN_VALID_FREQ = 1000u"  >> $@; \
+	  echo "MARIAN_SAVE_FREQ = 1000u"  >> $@; \
+	  echo "MARIAN_DISP_FREQ = 1000u"  >> $@; \
 	  echo "MARIAN_WORKSPACE  = 5000"  >> $@; \
 	  echo "MARIAN_VALID_MINI_BATCH = 8" >> $@; \
 	  echo "SUBWORD_VOCAB_SIZE     = 4000"        >> $@; \
@@ -801,7 +810,9 @@ ${WORKDIR}/${MODELCONFIG}:
 	  echo "# ${LANGPAIRSTR} training data less than ${SMALLEST_TRAINSIZE}" > $@; \
 	  echo "GPUJOB_HPC_MEM = 4g"       >> $@; \
 	  echo "GPUJOB_SUBMIT  = "         >> $@; \
-	  echo "MARIAN_VALID_FREQ = 1000"  >> $@; \
+	  echo "MARIAN_VALID_FREQ = 1000u"  >> $@; \
+	  echo "MARIAN_SAVE_FREQ = 1000u"  >> $@; \
+	  echo "MARIAN_DISP_FREQ = 1000u"  >> $@; \
 	  echo "MARIAN_WORKSPACE  = 3500"  >> $@; \
 	  echo "MARIAN_DROPOUT    = 0.5"   >> $@; \
 	  echo "MARIAN_VALID_MINI_BATCH = 4" >> $@; \
@@ -886,4 +897,3 @@ opus-langpairs.txt:
 	tr ' ' "\n" < $@.all |\
 	sed 's/ //g' | sort -u | tr "\n" ' ' > $@
 	rm -f $@.all
-

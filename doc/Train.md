@@ -25,8 +25,9 @@ Parameters / variables:
 * `TRGLANGS`: list of target language codes
 * `MODELTYPE`: transformer or transformer-align (with guided alignment) (default: transformer-align)
 * `NR`: model number, also used for initialisation seed (default: 1)
-* `MARIAN_VALID_FREQ`: validation frequency (default: 10000)
-* `MARIAN_EARLY_STOPPING`: stop after number of validation steps without improvement (default: 10)
+* `MARIAN_VALID_FREQ`: validation frequency (default: `10000u`)
+* `MARIAN_VALID_METRICS`: validation metrics (default: `perplexity bleu chrf`)
+* `MARIAN_EARLY_STOPPING`: stop after number of validation checks without improvement (default: 10)
 * `MARIAN_WORKSPACE`: allocated space on GPU (default: depends on device, see `lib/env.mk`)
 * `WALLTIME`: walltime for HPC jobs in hours (default: 72)
 
@@ -67,7 +68,7 @@ The default configuration and parameters for training Marian-NMT models are spec
         --valid-freq ${MARIAN_VALID_FREQ} \
 	--save-freq ${MARIAN_SAVE_FREQ} \
 	--disp-freq ${MARIAN_DISP_FREQ} \
-        --valid-metrics perplexity \
+        --valid-metrics ${MARIAN_VALID_METRICS} \
         --valid-mini-batch ${MARIAN_VALID_MINI_BATCH} \
         --beam-size 12 --normalize 1 --allow-unk \
         --enc-depth 6 --dec-depth 6 \
@@ -89,6 +90,8 @@ The default configuration and parameters for training Marian-NMT models are spec
 ```
 
 * guided alignment is only used with `MODELTYPE=transformer-align`.
+* early stopping and `MODEL_FINAL` follow the first metric in `MARIAN_VALID_METRICS`
+* this vendored Marian build does not support epoch units like `1e` for frequency parameters such as `valid-freq`
 * `MARIAN_WORKSPACE` is set depending on the GPU that is used (13000 for p100, 24000 for v100 and 10000 otherwise)
 * if no GPU is found (tested using `nvidia-smi`) then the `--cpu-threads` flag is added automatically
 * other default parameters are set like this:
@@ -96,9 +99,11 @@ The default configuration and parameters for training Marian-NMT models are spec
 ```
 MARIAN_GPUS             = 0
 MARIAN_EXTRA            = 
-MARIAN_VALID_FREQ       = 10000
-MARIAN_SAVE_FREQ        = ${MARIAN_VALID_FREQ}
-MARIAN_DISP_FREQ        = ${MARIAN_VALID_FREQ}
+MARIAN_VALID_METRICS    = perplexity bleu chrf
+MARIAN_BEST_VALID_METRIC = firstword(MARIAN_VALID_METRICS)
+MARIAN_VALID_FREQ       = 10000u
+MARIAN_SAVE_FREQ        = 10000u
+MARIAN_DISP_FREQ        = 10000u
 MARIAN_EARLY_STOPPING   = 10
 MARIAN_VALID_MINI_BATCH = 16
 MARIAN_MAXI_BATCH       = 500

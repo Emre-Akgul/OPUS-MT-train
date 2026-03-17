@@ -30,18 +30,18 @@ intgemm8tuned: ${MODEL_INTGEMM8TUNED}
 
 
 # ${MODEL_BIN}: ${MODEL_FINAL}
-%.intgemm8.bin: %.npz.best-perplexity.npz
+%.intgemm8.bin: %.npz.best-${MARIAN_BEST_VALID_METRIC}.npz
 	mkdir -p ${dir $@}
 	${BROWSERMT_CONVERT} -g intgemm8 -f $< -t $@
 
 %.intgemm8.alphas.bin: %.alphas.npz
 	${BROWSERMT_CONVERT} --gemm-type intgemm8 -f $< -t $@
 
-%.alphas.npz: %.quantmults %.npz.best-perplexity.npz
+%.alphas.npz: %.quantmults %.npz.best-${MARIAN_BEST_VALID_METRIC}.npz
 	${BROWSERMT_HOME}/marian-dev/scripts/alphas/extract_stats.py $^ $@
 
 ## NOTE: need to run this on CPU and with one core only!
-%.quantmults: %.npz.best-perplexity.npz
+%.quantmults: %.npz.best-${MARIAN_BEST_VALID_METRIC}.npz
 	${BROWSERMT_DECODE} \
 		--beam-size 1 --mini-batch 32 --maxi-batch 100 --maxi-batch-sort src -w 128 \
 		--skip-cost --cpu-threads 1 \
@@ -73,7 +73,7 @@ intgemm8tuned: ${MODEL_INTGEMM8TUNED}
 		-i ${DEV_SRC}.${PRE_SRC} -o ${DEV_SRC}.${PRE_SRC}.${TRG} \
 		--dump-quantmult --log $@.log 2> $@
 
-%.intgemm8tuned.npz: %.npz.best-perplexity.npz
+%.intgemm8tuned.npz: %.npz.best-${MARIAN_BEST_VALID_METRIC}.npz
 	cp $< $@
 	${LOAD_ENV} && ${BROWSERMT_TRAIN} \
 		${MARIAN_TRAINING_PARAMETER} \
@@ -255,5 +255,4 @@ ${WORKDIR}/${TESTSET_NAME}.${MODEL}${NR}.${MODELTYPE}.intgemm8tunedshiftAlphas.s
 		-m ${MODEL_BIN_TUNED_ALPHAS} --vocabs ${MODEL_SRCVOCAB} ${MODEL_TRGVOCAB} \
 		-i $< | \
 	sed 's/ //g;s/▁/ /g;s/^ *//;s/ *$$//' > $@
-
 

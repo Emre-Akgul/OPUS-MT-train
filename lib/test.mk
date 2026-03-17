@@ -33,7 +33,7 @@ eval-testsets:
 # translate with an ensemble of several models
 #------------------------------------------------------------------------
 
-ENSEMBLE = ${wildcard ${WORKDIR}/${MODEL}.${MODELTYPE}.model*.npz.best-perplexity.npz}
+ENSEMBLE = ${wildcard ${WORKDIR}/${MODEL}.${MODELTYPE}.model*.npz.best-${MARIAN_BEST_VALID_METRIC}.npz}
 
 ${WORKDIR}/${TESTSET_NAME}.${MODEL}${NR}.${MODELTYPE}.ensemble.${SRC}.${TRG}: ${TEST_SRC}.${PRE_SRC} ${ENSEMBLE}
 	mkdir -p ${dir $@}

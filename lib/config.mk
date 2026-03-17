@@ -384,6 +384,22 @@ SUBWORD_VOCAB_SIZE    ?= ${BPESIZE}
 SUBWORD_SRCVOCAB_SIZE ?= ${SUBWORD_VOCAB_SIZE}
 SUBWORD_TRGVOCAB_SIZE ?= ${SUBWORD_VOCAB_SIZE}
 
+# SentencePiece is trained with --byte_fallback in this repo, which adds
+# 256 byte tokens on top of normal meta pieces. Extremely small vocabularies
+# like spm1k can therefore become invalid on some language/data combinations.
+SPM_MIN_VOCAB_SIZE    ?= 2000
+ifneq ($(findstring spm,${SUBWORDS}),)
+ifneq (${shell [ ${SUBWORD_VOCAB_SIZE} -lt ${SPM_MIN_VOCAB_SIZE} ] && echo 1},)
+  SUBWORD_VOCAB_SIZE := ${SPM_MIN_VOCAB_SIZE}
+endif
+ifneq (${shell [ ${SUBWORD_SRCVOCAB_SIZE} -lt ${SPM_MIN_VOCAB_SIZE} ] && echo 1},)
+  SUBWORD_SRCVOCAB_SIZE := ${SPM_MIN_VOCAB_SIZE}
+endif
+ifneq (${shell [ ${SUBWORD_TRGVOCAB_SIZE} -lt ${SPM_MIN_VOCAB_SIZE} ] && echo 1},)
+  SUBWORD_TRGVOCAB_SIZE := ${SPM_MIN_VOCAB_SIZE}
+endif
+endif
+
 SUBWORD_MODEL_NAME ?= opus
 
 ifeq (${SUBWORDS},bpe)
@@ -789,7 +805,7 @@ ${WORKDIR}/${MODELCONFIG}:
 	  echo "MARIAN_WORKSPACE  = 3500"  >> $@; \
 	  echo "MARIAN_DROPOUT    = 0.5"   >> $@; \
 	  echo "MARIAN_VALID_MINI_BATCH = 4" >> $@; \
-	  echo "SUBWORD_VOCAB_SIZE     = 1000"        >> $@; \
+	  echo "SUBWORD_VOCAB_SIZE     = ${SPM_MIN_VOCAB_SIZE}" >> $@; \
 	  echo "DEVSIZE     = 500"         >> $@; \
 	  echo "TESTSIZE    = 1000"        >> $@; \
 	  echo "DEVMINSIZE  = 100"         >> $@; \
@@ -870,5 +886,4 @@ opus-langpairs.txt:
 	tr ' ' "\n" < $@.all |\
 	sed 's/ //g' | sort -u | tr "\n" ' ' > $@
 	rm -f $@.all
-
 

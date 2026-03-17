@@ -8,6 +8,12 @@
 SHELL    := /bin/bash
 PWD      ?= ${shell pwd}
 REPOHOME ?= ${PWD}/
+PYTHON   ?= ${shell which python3 2>/dev/null || echo python3}
+VENV_DIR ?= ${REPOHOME}.venv
+VENV_BIN := ${VENV_DIR}/bin
+VENV_PYTHON := ${VENV_BIN}/python
+VENV_PIP := ${VENV_BIN}/pip
+export PATH := ${VENV_BIN}:$(PATH)
 
 # job-specific settings (overwrite if necessary)
 # HPC_EXTRA: additional SBATCH commands
@@ -120,10 +126,9 @@ SPM_HOME       ?= ${dir ${MARIAN}}
 FASTALIGN      ?= ${shell which fast_align  2>/dev/null || echo ${TOOLSDIR}/fast_align/build/fast_align}
 FASTALIGN_HOME ?= ${dir ${FASTALIGN}}
 ATOOLS         ?= ${FASTALIGN_HOME}atools
-EFLOMAL        ?= ${shell which eflomal     2>/dev/null || echo ${TOOLSDIR}/eflomal/eflomal}
-EFLOMAL_HOME   ?= ${dir ${EFLOMAL}}
-WORDALIGN      ?= ${EFLOMAL_HOME}align.py
-EFLOMAL        ?= ${EFLOMAL_HOME}eflomal
+EFLOMAL_HOME   ?= ${TOOLSDIR}/eflomal/
+EFLOMAL        ?= ${shell if [ -x "${VENV_BIN}/eflomal-align" ]; then echo ${VENV_BIN}/eflomal-align; elif which eflomal >/dev/null 2>/dev/null; then which eflomal; elif which eflomal-align >/dev/null 2>/dev/null; then which eflomal-align; elif [ -x "${EFLOMAL_HOME}eflomal" ]; then echo ${EFLOMAL_HOME}eflomal; elif [ -x "${EFLOMAL_HOME}bin/eflomal" ]; then echo ${EFLOMAL_HOME}bin/eflomal; else echo ${TOOLSDIR}/eflomal/eflomal; fi}
+WORDALIGN      ?= ${shell if [ -x "${VENV_BIN}/eflomal-align" ]; then echo ${VENV_BIN}/eflomal-align; elif which eflomal-align >/dev/null 2>/dev/null; then which eflomal-align; elif [ -x "${EFLOMAL_HOME}align.py" ]; then echo ${EFLOMAL_HOME}align.py; elif [ -x "${EFLOMAL_HOME}python/scripts/eflomal-align" ]; then echo ${EFLOMAL_HOME}python/scripts/eflomal-align; else echo ${TOOLSDIR}/eflomal/align.py; fi}
 EXTRACT_LEX    ?= ${shell which extract_lex 2>/dev/null || echo ${TOOLSDIR}/extract-lex/build/extract_lex}
 MOSESSCRIPTS   ?= ${TOOLSDIR}/moses-scripts/scripts
 TMX2MOSES      ?= ${shell which tmx2moses 2>/dev/null || echo ${TOOLSDIR}/OpusTools-perl/scripts/convert/tmx2moses}
@@ -208,6 +213,26 @@ else
   LOAD_ENV = ${LOAD_CPU_ENV}
 endif
 
+ifneq ($(wildcard /usr/local/cuda/lib64/libcublasLt.so),)
+  MARIAN_BUILD_OPTIONS += -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda
+endif
+
+CBLAS_HEADER_FOUND := ${shell \
+  for d in /usr/include /usr/local/include /usr/include/x86_64-linux-gnu /usr/local/include/x86_64-linux-gnu; do \
+    if [ -e "$$d/cblas.h" ]; then \
+      echo 1; \
+      exit 0; \
+    fi; \
+  done; \
+  echo 0; \
+}
+
+ifeq (${GPU_AVAILABLE},1)
+ifeq (${CBLAS_HEADER_FOUND},0)
+  MARIAN_BUILD_OPTIONS += -DCOMPILE_CPU=off
+endif
+endif
+
 
 
 COMET_SCORE ?= comet-score
@@ -232,11 +257,11 @@ PREREQ_PERL  := ISO::639::3 ISO::639::5 OPUS::Tools XML::Parser
 EXTRA_TOOLS  := ${EXTRACT_LEX} ${BROWSERMT_TRAIN} ${JQ} 
 
 
-PIP  := ${shell which pip3  2>/dev/null || echo pip}
+PIP  := ${shell if [ -x "${VENV_PIP}" ]; then echo ${VENV_PIP}; elif which pip3 >/dev/null 2>/dev/null; then which pip3; else echo pip; fi}
 CPAN := ${shell which cpanm 2>/dev/null || echo cpan}
 
 
-PIP  := ${shell ${LOAD_BUILD_ENV} >/dev/null 2>/dev/null && which pip3  2>/dev/null || echo pip}
+PIP  := ${shell if [ -x "${VENV_PIP}" ]; then echo ${VENV_PIP}; elif ${LOAD_BUILD_ENV} >/dev/null 2>/dev/null && which pip3 >/dev/null 2>/dev/null; then which pip3; else echo pip; fi}
 CPAN := ${shell ${LOAD_BUILD_ENV} >/dev/null 2>/dev/null && which cpanm 2>/dev/null || echo cpan}
 
 ## setup local Perl environment
@@ -265,10 +290,11 @@ install install-prerequisites install-prereq install-requirements:
 	sed 's#google/googletest#google/googletest|	branch = main#' | tr '|' "\n" | uniq \
 	> tools/browsermt/marian-dev/src/3rd_party/fbgemm/.gitmodules
 	git submodule update --init --recursive --remote
-	${LOAD_BUILD_ENV} && ${PIP} install --user -r requirements.txt
+	${LOAD_BUILD_ENV} && ${MAKE} ${VENV_PIP}
+	${LOAD_BUILD_ENV} && ${VENV_PIP} install -r requirements.txt
 	${LOAD_BUILD_ENV} && ${MAKE} install-perl-modules
 	${LOAD_BUILD_ENV} && ${MAKE} ${PREREQ_TOOLS}
-	if [ ! -e scores ]; then \
+	if [ ! -e scores ] && [ ! -L scores ]; then \
 	  ln -s OPUS-MT-leaderboard/scores scores; \
 	fi
 
@@ -291,6 +317,14 @@ install-perl-modules:
 .PHONY: install-extra-tools
 install-extra-tools:
 	${LOAD_BUILD_ENV} && ${MAKE} ${EXTRA_TOOLS}
+
+
+${VENV_PIP}: ${VENV_PYTHON}
+	${LOAD_BUILD_ENV} && ${VENV_PYTHON} -m pip install --upgrade pip
+
+
+${VENV_PYTHON}:
+	${LOAD_BUILD_ENV} && ${PYTHON} -m venv ${VENV_DIR}
 
 
 ${TOOLSDIR}/LanguageCodes/ISO-639-3/bin/iso639:
@@ -376,9 +410,10 @@ ${TOOLSDIR}/extract-lex/build/extract_lex:
 
 .PHONY: install-eflomal
 install-eflomal:
-${TOOLSDIR}/eflomal/eflomal:
-	${MAKE} -C ${dir $@} all
-	cd ${dir $@} && python3 setup.py install --user
+${TOOLSDIR}/eflomal/eflomal: ${VENV_PIP}
+	${MAKE} -C ${dir $@}/src python-install
+	ln -sf src/eflomal $@
+	cd ${dir $@} && ${VENV_PYTHON} -m pip install .
 #	python3 setup.py install --install-dir ${HOME}/.local
 
 

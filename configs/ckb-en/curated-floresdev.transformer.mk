@@ -1,0 +1,26 @@
+# ckb-en training with selected corpora and flores-plus as full dev set
+GPUJOB_HPC_MEM = 4g
+GPUJOB_SUBMIT  =
+MARIAN_VALID_FREQ = 1000u
+MARIAN_SAVE_FREQ = 1000u
+MARIAN_DISP_FREQ = 1000u
+MARIAN_VALID_METRICS = bleu chrf perplexity
+MARIAN_WORKSPACE  = 5000
+MARIAN_VALID_MINI_BATCH = 8
+SUBWORD_VOCAB_SIZE     = 4000
+DEVSIZE     = 2009
+TESTSIZE    = 0
+DEVMINSIZE  = 100
+SRCLANGS    = ckb
+TRGLANGS    = en
+SKIPLANGS   =
+LANGPAIRSTR = ckb-en
+DATASET     = curated-floresdev
+TRAINSET    = InterdialectCorpus Tatoeba wikimedia tico-19 navinaananthan_kurdish_sorani_parallel_corpus
+DEVSET      = openlanguagedata_flores_plus
+TESTSET     = openlanguagedata_flores_plus
+PRE         = simple
+SUBWORDS    = spm
+SHUFFLE_DATA      = 1
+MAX_OVER_SAMPLING = 50
+USE_REST_DEVDATA  = 0

@@ -1,0 +1,244 @@
+[2026-03-17 11:34:01] [valid] First sentence's tokens as scored:
+[2026-03-17 11:34:01] [valid] DefaultVocab keeps original segments for scoring
+[2026-03-17 11:34:01] [valid]   Hyp: ▁The ▁of ▁the ▁of ▁the ▁of ▁the ▁of ▁the ▁of ▁the ▁of ▁the ▁Kurdistan ▁of ▁the ▁Kurdistan ▁of ▁the ▁Kurdistan ▁of ▁the ▁Kurdistan ▁of ▁the ▁Kurdistan ▁of ▁the ▁Kurdistan ▁of ▁the ▁Kurdistan ▁of ▁the ▁Kurdistan ▁of ▁the ▁Kurdistan ▁of ▁the ▁ ▁of ▁the ▁Kurdistan ▁of ▁the ▁ ▁of ▁the ▁ ▁of ▁the ▁ ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s ▁of ▁the ▁ s
+[2026-03-17 11:34:01] [valid]   Ref: ▁Other ▁scientist s ▁a r gue ▁that ▁these ▁plant s ▁are ▁very ▁ po i son ous ▁so ▁it ▁is ▁un li ke ly ▁that ▁any ▁di no sa ur ▁a te ▁them , ▁even ▁ th ough ▁today ▁the ▁ s lo th ▁and ▁other ▁animal s ▁like ▁the ▁ par ro t ▁( a ▁de s ce nd ant ▁of ▁the ▁di no sa ur s ) ▁can ▁eat ▁ po i son ous ▁leave s ▁or ▁fruit .
+[2026-03-17 11:35:24] [valid] Ep. 1 : Up. 1000 : bleu : 0.20009 : new best
+[2026-03-17 11:36:48] [valid] Ep. 1 : Up. 1000 : chrf : 13.8348 : new best
+[2026-03-17 11:36:51] [valid] Ep. 1 : Up. 1000 : perplexity : 596.879 : new best
+[2026-03-17 11:40:22] [valid] Ep. 2 : Up. 2000 : bleu : 0.426546 : new best
+[2026-03-17 11:41:16] [valid] Ep. 2 : Up. 2000 : chrf : 17.745 : new best
+[2026-03-17 11:41:19] [valid] Ep. 2 : Up. 2000 : perplexity : 305.76 : new best
+[2026-03-17 11:45:02] [valid] Ep. 3 : Up. 3000 : bleu : 0.739398 : new best
+[2026-03-17 11:46:07] [valid] Ep. 3 : Up. 3000 : chrf : 19.6223 : new best
+[2026-03-17 11:46:10] [valid] Ep. 3 : Up. 3000 : perplexity : 194.22 : new best
+[2026-03-17 11:49:46] [valid] Ep. 4 : Up. 4000 : bleu : 0.947976 : new best
+[2026-03-17 11:50:46] [valid] Ep. 4 : Up. 4000 : chrf : 19.8122 : new best
+[2026-03-17 11:50:49] [valid] Ep. 4 : Up. 4000 : perplexity : 138.31 : new best
+[2026-03-17 11:54:26] [valid] Ep. 4 : Up. 5000 : bleu : 1.03856 : new best
+[2026-03-17 11:55:27] [valid] Ep. 4 : Up. 5000 : chrf : 20.2953 : new best
+[2026-03-17 11:55:30] [valid] Ep. 4 : Up. 5000 : perplexity : 105.515 : new best
+[2026-03-17 11:59:08] [valid] Ep. 5 : Up. 6000 : bleu : 1.36542 : new best
+[2026-03-17 12:00:07] [valid] Ep. 5 : Up. 6000 : chrf : 21.1195 : new best
+[2026-03-17 12:00:11] [valid] Ep. 5 : Up. 6000 : perplexity : 84.351 : new best
+[2026-03-17 12:03:47] [valid] Ep. 6 : Up. 7000 : bleu : 1.44728 : new best
+[2026-03-17 12:04:45] [valid] Ep. 6 : Up. 7000 : chrf : 21.8337 : new best
+[2026-03-17 12:04:48] [valid] Ep. 6 : Up. 7000 : perplexity : 70.3971 : new best
+[2026-03-17 12:08:23] [valid] Ep. 7 : Up. 8000 : bleu : 1.73865 : new best
+[2026-03-17 12:09:20] [valid] Ep. 7 : Up. 8000 : chrf : 22.4042 : new best
+[2026-03-17 12:09:23] [valid] Ep. 7 : Up. 8000 : perplexity : 60.6255 : new best
+[2026-03-17 12:12:59] [valid] Ep. 8 : Up. 9000 : bleu : 1.96317 : new best
+[2026-03-17 12:13:58] [valid] Ep. 8 : Up. 9000 : chrf : 22.9242 : new best
+[2026-03-17 12:14:01] [valid] Ep. 8 : Up. 9000 : perplexity : 53.6304 : new best
+[2026-03-17 12:17:36] [valid] Ep. 8 : Up. 10000 : bleu : 2.26585 : new best
+[2026-03-17 12:18:35] [valid] Ep. 8 : Up. 10000 : chrf : 23.231 : new best
+[2026-03-17 12:18:38] [valid] Ep. 8 : Up. 10000 : perplexity : 48.1652 : new best
+[2026-03-17 12:22:14] [valid] Ep. 9 : Up. 11000 : bleu : 2.61406 : new best
+[2026-03-17 12:23:13] [valid] Ep. 9 : Up. 11000 : chrf : 24.2476 : new best
+[2026-03-17 12:23:16] [valid] Ep. 9 : Up. 11000 : perplexity : 41.8181 : new best
+[2026-03-17 12:26:49] [valid] Ep. 10 : Up. 12000 : bleu : 3.51918 : new best
+[2026-03-17 12:27:47] [valid] Ep. 10 : Up. 12000 : chrf : 26.3201 : new best
+[2026-03-17 12:27:50] [valid] Ep. 10 : Up. 12000 : perplexity : 35.0184 : new best
+[2026-03-17 12:31:23] [valid] Ep. 11 : Up. 13000 : bleu : 4.61432 : new best
+[2026-03-17 12:32:20] [valid] Ep. 11 : Up. 13000 : chrf : 29.1005 : new best
+[2026-03-17 12:32:23] [valid] Ep. 11 : Up. 13000 : perplexity : 29.4249 : new best
+[2026-03-17 12:35:51] [valid] Ep. 11 : Up. 14000 : bleu : 6.07182 : new best
+[2026-03-17 12:36:43] [valid] Ep. 11 : Up. 14000 : chrf : 32.3302 : new best
+[2026-03-17 12:36:46] [valid] Ep. 11 : Up. 14000 : perplexity : 25.0797 : new best
+[2026-03-17 12:40:10] [valid] Ep. 12 : Up. 15000 : bleu : 7.93805 : new best
+[2026-03-17 12:40:57] [valid] Ep. 12 : Up. 15000 : chrf : 35.1201 : new best
+[2026-03-17 12:41:00] [valid] Ep. 12 : Up. 15000 : perplexity : 21.592 : new best
+[2026-03-17 12:44:21] [valid] Ep. 13 : Up. 16000 : bleu : 9.77363 : new best
+[2026-03-17 12:45:05] [valid] Ep. 13 : Up. 16000 : chrf : 37.9425 : new best
+[2026-03-17 12:45:08] [valid] Ep. 13 : Up. 16000 : perplexity : 18.5337 : new best
+[2026-03-17 12:48:26] [valid] Ep. 14 : Up. 17000 : bleu : 11.8644 : new best
+[2026-03-17 12:49:07] [valid] Ep. 14 : Up. 17000 : chrf : 40.7982 : new best
+[2026-03-17 12:49:10] [valid] Ep. 14 : Up. 17000 : perplexity : 15.9245 : new best
+[2026-03-17 12:52:24] [valid] Ep. 15 : Up. 18000 : bleu : 14.0727 : new best
+[2026-03-17 12:53:01] [valid] Ep. 15 : Up. 18000 : chrf : 43.1414 : new best
+[2026-03-17 12:53:04] [valid] Ep. 15 : Up. 18000 : perplexity : 13.833 : new best
+[2026-03-17 12:56:17] [valid] Ep. 15 : Up. 19000 : bleu : 16.1649 : new best
+[2026-03-17 12:56:55] [valid] Ep. 15 : Up. 19000 : chrf : 45.4119 : new best
+[2026-03-17 12:56:58] [valid] Ep. 15 : Up. 19000 : perplexity : 12.2009 : new best
+[2026-03-17 13:00:10] [valid] Ep. 16 : Up. 20000 : bleu : 17.9531 : new best
+[2026-03-17 13:00:47] [valid] Ep. 16 : Up. 20000 : chrf : 47.1346 : new best
+[2026-03-17 13:00:50] [valid] Ep. 16 : Up. 20000 : perplexity : 10.9872 : new best
+[2026-03-17 13:04:02] [valid] Ep. 17 : Up. 21000 : bleu : 19.733 : new best
+[2026-03-17 13:04:37] [valid] Ep. 17 : Up. 21000 : chrf : 48.8003 : new best
+[2026-03-17 13:04:40] [valid] Ep. 17 : Up. 21000 : perplexity : 10.0819 : new best
+[2026-03-17 13:07:52] [valid] Ep. 18 : Up. 22000 : bleu : 21.2421 : new best
+[2026-03-17 13:08:27] [valid] Ep. 18 : Up. 22000 : chrf : 50.0456 : new best
+[2026-03-17 13:08:30] [valid] Ep. 18 : Up. 22000 : perplexity : 9.40633 : new best
+[2026-03-17 13:11:41] [valid] Ep. 19 : Up. 23000 : bleu : 22.2447 : new best
+[2026-03-17 13:12:16] [valid] Ep. 19 : Up. 23000 : chrf : 51.0049 : new best
+[2026-03-17 13:12:19] [valid] Ep. 19 : Up. 23000 : perplexity : 8.90167 : new best
+[2026-03-17 13:15:30] [valid] Ep. 19 : Up. 24000 : bleu : 23.2453 : new best
+[2026-03-17 13:16:04] [valid] Ep. 19 : Up. 24000 : chrf : 51.884 : new best
+[2026-03-17 13:16:07] [valid] Ep. 19 : Up. 24000 : perplexity : 8.50994 : new best
+[2026-03-17 13:19:17] [valid] Ep. 20 : Up. 25000 : bleu : 24.0328 : new best
+[2026-03-17 13:19:51] [valid] Ep. 20 : Up. 25000 : chrf : 52.3774 : new best
+[2026-03-17 13:19:54] [valid] Ep. 20 : Up. 25000 : perplexity : 8.21536 : new best
+[2026-03-17 13:23:04] [valid] Ep. 21 : Up. 26000 : bleu : 24.7492 : new best
+[2026-03-17 13:23:38] [valid] Ep. 21 : Up. 26000 : chrf : 52.8737 : new best
+[2026-03-17 13:23:41] [valid] Ep. 21 : Up. 26000 : perplexity : 7.98113 : new best
+[2026-03-17 13:26:51] [valid] Ep. 22 : Up. 27000 : bleu : 25.168 : new best
+[2026-03-17 13:27:24] [valid] Ep. 22 : Up. 27000 : chrf : 53.2641 : new best
+[2026-03-17 13:27:27] [valid] Ep. 22 : Up. 27000 : perplexity : 7.7939 : new best
+[2026-03-17 13:30:36] [valid] Ep. 22 : Up. 28000 : bleu : 25.6821 : new best
+[2026-03-17 13:31:10] [valid] Ep. 22 : Up. 28000 : chrf : 53.7155 : new best
+[2026-03-17 13:31:13] [valid] Ep. 22 : Up. 28000 : perplexity : 7.65031 : new best
+[2026-03-17 13:34:24] [valid] Ep. 23 : Up. 29000 : bleu : 25.983 : new best
+[2026-03-17 13:34:58] [valid] Ep. 23 : Up. 29000 : chrf : 53.9525 : new best
+[2026-03-17 13:35:01] [valid] Ep. 23 : Up. 29000 : perplexity : 7.52627 : new best
+[2026-03-17 13:38:12] [valid] Ep. 24 : Up. 30000 : bleu : 26.49 : new best
+[2026-03-17 13:38:46] [valid] Ep. 24 : Up. 30000 : chrf : 54.2978 : new best
+[2026-03-17 13:38:49] [valid] Ep. 24 : Up. 30000 : perplexity : 7.42475 : new best
+[2026-03-17 13:41:59] [valid] Ep. 25 : Up. 31000 : bleu : 26.6351 : new best
+[2026-03-17 13:42:33] [valid] Ep. 25 : Up. 31000 : chrf : 54.4215 : new best
+[2026-03-17 13:42:36] [valid] Ep. 25 : Up. 31000 : perplexity : 7.346 : new best
+[2026-03-17 13:45:47] [valid] Ep. 26 : Up. 32000 : bleu : 27.0143 : new best
+[2026-03-17 13:46:21] [valid] Ep. 26 : Up. 32000 : chrf : 54.6702 : new best
+[2026-03-17 13:46:24] [valid] Ep. 26 : Up. 32000 : perplexity : 7.27998 : new best
+[2026-03-17 13:49:34] [valid] Ep. 26 : Up. 33000 : bleu : 27.3094 : new best
+[2026-03-17 13:50:08] [valid] Ep. 26 : Up. 33000 : chrf : 54.8096 : new best
+[2026-03-17 13:50:11] [valid] Ep. 26 : Up. 33000 : perplexity : 7.22343 : new best
+[2026-03-17 13:53:22] [valid] Ep. 27 : Up. 34000 : bleu : 27.6714 : new best
+[2026-03-17 13:53:56] [valid] Ep. 27 : Up. 34000 : chrf : 55.1471 : new best
+[2026-03-17 13:53:59] [valid] Ep. 27 : Up. 34000 : perplexity : 7.1799 : new best
+[2026-03-17 13:57:09] [valid] Ep. 28 : Up. 35000 : bleu : 27.8467 : new best
+[2026-03-17 13:57:43] [valid] Ep. 28 : Up. 35000 : chrf : 55.2431 : new best
+[2026-03-17 13:57:46] [valid] Ep. 28 : Up. 35000 : perplexity : 7.14962 : new best
+[2026-03-17 14:00:57] [valid] Ep. 29 : Up. 36000 : bleu : 28.089 : new best
+[2026-03-17 14:01:31] [valid] Ep. 29 : Up. 36000 : chrf : 55.4319 : new best
+[2026-03-17 14:01:34] [valid] Ep. 29 : Up. 36000 : perplexity : 7.12352 : new best
+[2026-03-17 14:04:44] [valid] Ep. 30 : Up. 37000 : bleu : 28.4052 : new best
+[2026-03-17 14:05:18] [valid] Ep. 30 : Up. 37000 : chrf : 55.6393 : new best
+[2026-03-17 14:05:21] [valid] Ep. 30 : Up. 37000 : perplexity : 7.10268 : new best
+[2026-03-17 14:08:31] [valid] Ep. 30 : Up. 38000 : bleu : 28.5988 : new best
+[2026-03-17 14:09:05] [valid] Ep. 30 : Up. 38000 : chrf : 55.7216 : new best
+[2026-03-17 14:09:08] [valid] Ep. 30 : Up. 38000 : perplexity : 7.0867 : new best
+[2026-03-17 14:12:18] [valid] Ep. 31 : Up. 39000 : bleu : 28.705 : new best
+[2026-03-17 14:12:52] [valid] Ep. 31 : Up. 39000 : chrf : 55.7836 : new best
+[2026-03-17 14:12:55] [valid] Ep. 31 : Up. 39000 : perplexity : 7.07655 : new best
+[2026-03-17 14:16:07] [valid] Ep. 32 : Up. 40000 : bleu : 29.0242 : new best
+[2026-03-17 14:16:42] [valid] Ep. 32 : Up. 40000 : chrf : 56.0245 : new best
+[2026-03-17 14:16:45] [valid] Ep. 32 : Up. 40000 : perplexity : 7.07012 : new best
+[2026-03-17 14:19:54] [valid] Ep. 33 : Up. 41000 : bleu : 28.971 : stalled 1 times (last best: 29.0242)
+[2026-03-17 14:20:27] [valid] Ep. 33 : Up. 41000 : chrf : 55.9228 : stalled 1 times (last best: 56.0245)
+[2026-03-17 14:20:29] [valid] Ep. 33 : Up. 41000 : perplexity : 7.07016 : stalled 1 times (last best: 7.07012)
+[2026-03-17 14:23:39] [valid] Ep. 33 : Up. 42000 : bleu : 29.007 : stalled 2 times (last best: 29.0242)
+[2026-03-17 14:24:11] [valid] Ep. 33 : Up. 42000 : chrf : 56.0017 : stalled 2 times (last best: 56.0245)
+[2026-03-17 14:24:14] [valid] Ep. 33 : Up. 42000 : perplexity : 7.06886 : new best
+[2026-03-17 14:27:24] [valid] Ep. 34 : Up. 43000 : bleu : 29.1643 : new best
+[2026-03-17 14:27:58] [valid] Ep. 34 : Up. 43000 : chrf : 56.1102 : new best
+[2026-03-17 14:28:02] [valid] Ep. 34 : Up. 43000 : perplexity : 7.06809 : new best
+[2026-03-17 14:31:11] [valid] Ep. 35 : Up. 44000 : bleu : 29.1556 : stalled 1 times (last best: 29.1643)
+[2026-03-17 14:31:43] [valid] Ep. 35 : Up. 44000 : chrf : 56.0613 : stalled 1 times (last best: 56.1102)
+[2026-03-17 14:31:45] [valid] Ep. 35 : Up. 44000 : perplexity : 7.07779 : stalled 1 times (last best: 7.06809)
+[2026-03-17 14:34:56] [valid] Ep. 36 : Up. 45000 : bleu : 29.2989 : new best
+[2026-03-17 14:35:30] [valid] Ep. 36 : Up. 45000 : chrf : 56.1933 : new best
+[2026-03-17 14:35:31] [valid] Ep. 36 : Up. 45000 : perplexity : 7.08979 : stalled 2 times (last best: 7.06809)
+[2026-03-17 14:38:41] [valid] Ep. 37 : Up. 46000 : bleu : 29.3967 : new best
+[2026-03-17 14:39:15] [valid] Ep. 37 : Up. 46000 : chrf : 56.2559 : new best
+[2026-03-17 14:39:17] [valid] Ep. 37 : Up. 46000 : perplexity : 7.10239 : stalled 3 times (last best: 7.06809)
+[2026-03-17 14:42:27] [valid] Ep. 37 : Up. 47000 : bleu : 29.4626 : new best
+[2026-03-17 14:43:00] [valid] Ep. 37 : Up. 47000 : chrf : 56.2496 : stalled 1 times (last best: 56.2559)
+[2026-03-17 14:43:02] [valid] Ep. 37 : Up. 47000 : perplexity : 7.11707 : stalled 4 times (last best: 7.06809)
+[2026-03-17 14:46:13] [valid] Ep. 38 : Up. 48000 : bleu : 29.4732 : new best
+[2026-03-17 14:46:47] [valid] Ep. 38 : Up. 48000 : chrf : 56.2923 : new best
+[2026-03-17 14:46:49] [valid] Ep. 38 : Up. 48000 : perplexity : 7.13245 : stalled 5 times (last best: 7.06809)
+[2026-03-17 14:49:59] [valid] Ep. 39 : Up. 49000 : bleu : 29.4499 : stalled 1 times (last best: 29.4732)
+[2026-03-17 14:50:32] [valid] Ep. 39 : Up. 49000 : chrf : 56.2621 : stalled 1 times (last best: 56.2923)
+[2026-03-17 14:50:34] [valid] Ep. 39 : Up. 49000 : perplexity : 7.14947 : stalled 6 times (last best: 7.06809)
+[2026-03-17 14:53:44] [valid] Ep. 40 : Up. 50000 : bleu : 29.5443 : new best
+[2026-03-17 14:54:17] [valid] Ep. 40 : Up. 50000 : chrf : 56.3338 : new best
+[2026-03-17 14:54:19] [valid] Ep. 40 : Up. 50000 : perplexity : 7.17176 : stalled 7 times (last best: 7.06809)
+[2026-03-17 14:57:30] [valid] Ep. 41 : Up. 51000 : bleu : 29.6429 : new best
+[2026-03-17 14:58:04] [valid] Ep. 41 : Up. 51000 : chrf : 56.3643 : new best
+[2026-03-17 14:58:06] [valid] Ep. 41 : Up. 51000 : perplexity : 7.19702 : stalled 8 times (last best: 7.06809)
+[2026-03-17 15:01:16] [valid] Ep. 41 : Up. 52000 : bleu : 29.6904 : new best
+[2026-03-17 15:01:50] [valid] Ep. 41 : Up. 52000 : chrf : 56.4288 : new best
+[2026-03-17 15:01:52] [valid] Ep. 41 : Up. 52000 : perplexity : 7.22388 : stalled 9 times (last best: 7.06809)
+[2026-03-17 15:05:02] [valid] Ep. 42 : Up. 53000 : bleu : 29.6971 : new best
+[2026-03-17 15:05:36] [valid] Ep. 42 : Up. 53000 : chrf : 56.429 : new best
+[2026-03-17 15:05:38] [valid] Ep. 42 : Up. 53000 : perplexity : 7.24795 : stalled 10 times (last best: 7.06809)
+[2026-03-17 15:08:48] [valid] Ep. 43 : Up. 54000 : bleu : 29.7302 : new best
+[2026-03-17 15:09:22] [valid] Ep. 43 : Up. 54000 : chrf : 56.4952 : new best
+[2026-03-17 15:09:24] [valid] Ep. 43 : Up. 54000 : perplexity : 7.27358 : stalled 11 times (last best: 7.06809)
+[2026-03-17 15:12:34] [valid] Ep. 44 : Up. 55000 : bleu : 29.7946 : new best
+[2026-03-17 15:13:09] [valid] Ep. 44 : Up. 55000 : chrf : 56.5665 : new best
+[2026-03-17 15:13:10] [valid] Ep. 44 : Up. 55000 : perplexity : 7.29572 : stalled 12 times (last best: 7.06809)
+[2026-03-17 15:16:20] [valid] Ep. 44 : Up. 56000 : bleu : 29.8224 : new best
+[2026-03-17 15:16:53] [valid] Ep. 44 : Up. 56000 : chrf : 56.541 : stalled 1 times (last best: 56.5665)
+[2026-03-17 15:16:55] [valid] Ep. 44 : Up. 56000 : perplexity : 7.3182 : stalled 13 times (last best: 7.06809)
+[2026-03-17 15:20:05] [valid] Ep. 45 : Up. 57000 : bleu : 29.8511 : new best
+[2026-03-17 15:20:38] [valid] Ep. 45 : Up. 57000 : chrf : 56.5326 : stalled 2 times (last best: 56.5665)
+[2026-03-17 15:20:40] [valid] Ep. 45 : Up. 57000 : perplexity : 7.34328 : stalled 14 times (last best: 7.06809)
+[2026-03-17 15:23:51] [valid] Ep. 46 : Up. 58000 : bleu : 29.9399 : new best
+[2026-03-17 15:24:25] [valid] Ep. 46 : Up. 58000 : chrf : 56.5905 : new best
+[2026-03-17 15:24:27] [valid] Ep. 46 : Up. 58000 : perplexity : 7.37143 : stalled 15 times (last best: 7.06809)
+[2026-03-17 15:27:37] [valid] Ep. 47 : Up. 59000 : bleu : 30.0136 : new best
+[2026-03-17 15:28:11] [valid] Ep. 47 : Up. 59000 : chrf : 56.6279 : new best
+[2026-03-17 15:28:13] [valid] Ep. 47 : Up. 59000 : perplexity : 7.4013 : stalled 16 times (last best: 7.06809)
+[2026-03-17 15:31:23] [valid] Ep. 48 : Up. 60000 : bleu : 29.9611 : stalled 1 times (last best: 30.0136)
+[2026-03-17 15:31:56] [valid] Ep. 48 : Up. 60000 : chrf : 56.5928 : stalled 1 times (last best: 56.6279)
+[2026-03-17 15:31:58] [valid] Ep. 48 : Up. 60000 : perplexity : 7.43089 : stalled 17 times (last best: 7.06809)
+[2026-03-17 15:35:07] [valid] Ep. 48 : Up. 61000 : bleu : 29.9654 : stalled 2 times (last best: 30.0136)
+[2026-03-17 15:35:40] [valid] Ep. 48 : Up. 61000 : chrf : 56.5613 : stalled 2 times (last best: 56.6279)
+[2026-03-17 15:35:42] [valid] Ep. 48 : Up. 61000 : perplexity : 7.46353 : stalled 18 times (last best: 7.06809)
+[2026-03-17 15:38:52] [valid] Ep. 49 : Up. 62000 : bleu : 30.0312 : new best
+[2026-03-17 15:39:25] [valid] Ep. 49 : Up. 62000 : chrf : 56.5954 : stalled 3 times (last best: 56.6279)
+[2026-03-17 15:39:26] [valid] Ep. 49 : Up. 62000 : perplexity : 7.49258 : stalled 19 times (last best: 7.06809)
+[2026-03-17 15:42:38] [valid] Ep. 50 : Up. 63000 : bleu : 30.0824 : new best
+[2026-03-17 15:43:12] [valid] Ep. 50 : Up. 63000 : chrf : 56.6381 : new best
+[2026-03-17 15:43:14] [valid] Ep. 50 : Up. 63000 : perplexity : 7.52486 : stalled 20 times (last best: 7.06809)
+[2026-03-17 15:46:23] [valid] Ep. 51 : Up. 64000 : bleu : 30.1154 : new best
+[2026-03-17 15:46:57] [valid] Ep. 51 : Up. 64000 : chrf : 56.6711 : new best
+[2026-03-17 15:46:59] [valid] Ep. 51 : Up. 64000 : perplexity : 7.55614 : stalled 21 times (last best: 7.06809)
+[2026-03-17 15:50:09] [valid] Ep. 52 : Up. 65000 : bleu : 30.0773 : stalled 1 times (last best: 30.1154)
+[2026-03-17 15:50:42] [valid] Ep. 52 : Up. 65000 : chrf : 56.6138 : stalled 1 times (last best: 56.6711)
+[2026-03-17 15:50:44] [valid] Ep. 52 : Up. 65000 : perplexity : 7.58533 : stalled 22 times (last best: 7.06809)
+[2026-03-17 15:53:53] [valid] Ep. 52 : Up. 66000 : bleu : 30.1845 : new best
+[2026-03-17 15:54:26] [valid] Ep. 52 : Up. 66000 : chrf : 56.6309 : stalled 2 times (last best: 56.6711)
+[2026-03-17 15:54:28] [valid] Ep. 52 : Up. 66000 : perplexity : 7.6127 : stalled 23 times (last best: 7.06809)
+[2026-03-17 15:57:37] [valid] Ep. 53 : Up. 67000 : bleu : 30.1572 : stalled 1 times (last best: 30.1845)
+[2026-03-17 15:58:10] [valid] Ep. 53 : Up. 67000 : chrf : 56.6414 : stalled 3 times (last best: 56.6711)
+[2026-03-17 15:58:12] [valid] Ep. 53 : Up. 67000 : perplexity : 7.63827 : stalled 24 times (last best: 7.06809)
+[2026-03-17 16:01:20] [valid] Ep. 54 : Up. 68000 : bleu : 30.1514 : stalled 2 times (last best: 30.1845)
+[2026-03-17 16:01:52] [valid] Ep. 54 : Up. 68000 : chrf : 56.5403 : stalled 4 times (last best: 56.6711)
+[2026-03-17 16:01:54] [valid] Ep. 54 : Up. 68000 : perplexity : 7.66518 : stalled 25 times (last best: 7.06809)
+[2026-03-17 16:05:04] [valid] Ep. 55 : Up. 69000 : bleu : 30.2312 : new best
+[2026-03-17 16:05:37] [valid] Ep. 55 : Up. 69000 : chrf : 56.6219 : stalled 5 times (last best: 56.6711)
+[2026-03-17 16:05:39] [valid] Ep. 55 : Up. 69000 : perplexity : 7.69569 : stalled 26 times (last best: 7.06809)
+[2026-03-17 16:08:48] [valid] Ep. 55 : Up. 70000 : bleu : 30.2383 : new best
+[2026-03-17 16:09:21] [valid] Ep. 55 : Up. 70000 : chrf : 56.5935 : stalled 6 times (last best: 56.6711)
+[2026-03-17 16:09:23] [valid] Ep. 55 : Up. 70000 : perplexity : 7.72675 : stalled 27 times (last best: 7.06809)
+[2026-03-17 16:12:31] [valid] Ep. 56 : Up. 71000 : bleu : 30.1221 : stalled 1 times (last best: 30.2383)
+[2026-03-17 16:13:04] [valid] Ep. 56 : Up. 71000 : chrf : 56.476 : stalled 7 times (last best: 56.6711)
+[2026-03-17 16:13:06] [valid] Ep. 56 : Up. 71000 : perplexity : 7.75839 : stalled 28 times (last best: 7.06809)
+[2026-03-17 16:16:15] [valid] Ep. 57 : Up. 72000 : bleu : 30.0765 : stalled 2 times (last best: 30.2383)
+[2026-03-17 16:16:48] [valid] Ep. 57 : Up. 72000 : chrf : 56.4604 : stalled 8 times (last best: 56.6711)
+[2026-03-17 16:16:50] [valid] Ep. 57 : Up. 72000 : perplexity : 7.78884 : stalled 29 times (last best: 7.06809)
+[2026-03-17 16:19:58] [valid] Ep. 58 : Up. 73000 : bleu : 30.1305 : stalled 3 times (last best: 30.2383)
+[2026-03-17 16:20:32] [valid] Ep. 58 : Up. 73000 : chrf : 56.4798 : stalled 9 times (last best: 56.6711)
+[2026-03-17 16:20:34] [valid] Ep. 58 : Up. 73000 : perplexity : 7.8194 : stalled 30 times (last best: 7.06809)
+[2026-03-17 16:23:42] [valid] Ep. 59 : Up. 74000 : bleu : 30.1411 : stalled 4 times (last best: 30.2383)
+[2026-03-17 16:24:15] [valid] Ep. 59 : Up. 74000 : chrf : 56.5067 : stalled 10 times (last best: 56.6711)
+[2026-03-17 16:24:17] [valid] Ep. 59 : Up. 74000 : perplexity : 7.84916 : stalled 31 times (last best: 7.06809)
+[2026-03-17 16:27:25] [valid] Ep. 59 : Up. 75000 : bleu : 30.1608 : stalled 5 times (last best: 30.2383)
+[2026-03-17 16:27:58] [valid] Ep. 59 : Up. 75000 : chrf : 56.5587 : stalled 11 times (last best: 56.6711)
+[2026-03-17 16:28:00] [valid] Ep. 59 : Up. 75000 : perplexity : 7.87931 : stalled 32 times (last best: 7.06809)
+[2026-03-17 16:31:09] [valid] Ep. 60 : Up. 76000 : bleu : 30.2289 : stalled 6 times (last best: 30.2383)
+[2026-03-17 16:31:42] [valid] Ep. 60 : Up. 76000 : chrf : 56.625 : stalled 12 times (last best: 56.6711)
+[2026-03-17 16:31:44] [valid] Ep. 60 : Up. 76000 : perplexity : 7.90675 : stalled 33 times (last best: 7.06809)
+[2026-03-17 16:34:53] [valid] Ep. 61 : Up. 77000 : bleu : 30.1394 : stalled 7 times (last best: 30.2383)
+[2026-03-17 16:35:26] [valid] Ep. 61 : Up. 77000 : chrf : 56.5384 : stalled 13 times (last best: 56.6711)
+[2026-03-17 16:35:28] [valid] Ep. 61 : Up. 77000 : perplexity : 7.93742 : stalled 34 times (last best: 7.06809)
+[2026-03-17 16:38:37] [valid] Ep. 62 : Up. 78000 : bleu : 30.1839 : stalled 8 times (last best: 30.2383)
+[2026-03-17 16:39:10] [valid] Ep. 62 : Up. 78000 : chrf : 56.5013 : stalled 14 times (last best: 56.6711)
+[2026-03-17 16:39:12] [valid] Ep. 62 : Up. 78000 : perplexity : 7.97119 : stalled 35 times (last best: 7.06809)
+[2026-03-17 16:42:23] [valid] Ep. 63 : Up. 79000 : bleu : 30.1688 : stalled 9 times (last best: 30.2383)
+[2026-03-17 16:42:56] [valid] Ep. 63 : Up. 79000 : chrf : 56.527 : stalled 15 times (last best: 56.6711)
+[2026-03-17 16:42:58] [valid] Ep. 63 : Up. 79000 : perplexity : 8.00407 : stalled 36 times (last best: 7.06809)
+[2026-03-17 16:46:07] [valid] Ep. 63 : Up. 80000 : bleu : 30.2228 : stalled 10 times (last best: 30.2383)
+[2026-03-17 16:46:40] [valid] Ep. 63 : Up. 80000 : chrf : 56.5858 : stalled 16 times (last best: 56.6711)
+[2026-03-17 16:46:41] [valid] Ep. 63 : Up. 80000 : perplexity : 8.03482 : stalled 37 times (last best: 7.06809)

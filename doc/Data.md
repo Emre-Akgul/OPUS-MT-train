@@ -209,6 +209,23 @@ Extra data sets can be added by moving them to the directory of pre-processed bi
 
 Replace CORPUSNAME with the name of resource, SRCID and TRGID with the language codes of your data. You can add any number of extra training sets in this way by listing their names (CORPUSNAME) in the variable `EXTRA_TRAINSET` (space separated). I don't need to mention that you should avoid spaces in any file name ....!
 
+If your data is in a two-column CSV, use `scripts/csv2moses.py` to create the same files. By default, the script writes to `work/data/simple` and uses the OPUS-MT sorted language-pair name used by the Makefiles:
+
+```
+scripts/csv2moses.py path/to/train.csv --src en --trg ckb --corpus mytrain
+```
+
+For `en` and `ckb`, this creates:
+
+```
+work/data/simple/mytrain.ckb-en.clean.en.gz
+work/data/simple/mytrain.ckb-en.clean.ckb.gz
+```
+
+The CSV header can use the language IDs (`en`, `ckb`) or the generic names `SRCLANGS` and `TRGLANGS`. Use `--src-column` and `--trg-column` if the CSV has different column names.
+
+The training Makefile may request `.strict.*.gz` files internally. Those are derived from `.clean.*.gz` by the existing preprocessing rules, so the CSV converter only needs to create the `.clean.*.gz` files.
+
 
 
 ## Reverse translation direction

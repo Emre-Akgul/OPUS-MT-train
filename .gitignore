@@ -1,2 +1,6 @@
-.venv
-work/data/simple
+.env
+.venv/
+
+# Generated data, model artifacts, logs, and local helper virtualenvs.
+work/*
+!work/work.md

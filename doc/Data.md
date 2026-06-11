@@ -173,6 +173,9 @@ Most settings can be adjusted by setting corresponding variables to new values. 
 * change the size of test or validation data: set `DEVSIZE` and `TESTSIZE`
 * specify a specific list of corpora to train on: set `TRAINSET="<space-separated-corpus-names>"`
 * specify a specific test set: set `TESTSET=<corpusname>` (the same aplies for DEVSET)
+* specify different test sets in multilingual models:
+  * by direction: `TESTSET_BY_LANGPAIR="en-tr:bouquet-en-tr tr-en:bouquet-tr-en"`
+  * by target language: `TESTSET_BY_TRGLANG="tr:bouquet-tr kmr:bouquet-kmr"`
 * use all OPUS corpora but exclude some additional corpora from the list: modify `EXCLUDE_CORPORA`
 * use a different name than the generated one based on language pairs: set `LANGPAIRSTR`
 
@@ -184,6 +187,39 @@ Most settings can be adjusted by setting corresponding variables to new values. 
 The same targets can be used transparently for creating data sets for multilingual models. `SRCLANGS` and `TRGLANGS` can include any number of valid language IDs (separated by space). The `data` target will extract ALL combinations of language pairs from those sets. To exclude certain combinations, you can set `SKIP_LANGPAIRS` with a pattern of language pairs to be excluded (separated by `|`). For example, `SKIP_LANGPAIRS="en-de|en-fr"` excludes English-German and English-French from the data.
 
 If there are multiple target languages then language label tokens will automatically be added to all relevant data sets. They are added to the front of the source sentence and look like this `>>LANGID<<`. Development and test data also include data from all language pairs if available in the DEVSET/TESTSET corpus.
+
+For external evaluation sets such as Bouquet, multilingual test data can use different corpora per direction or per target language. Use `TESTSET_BY_LANGPAIR` for exact direction-level mappings and `TESTSET_BY_TRGLANG` when a target language shares the same test corpus across source languages. Direction-level mappings take precedence over target-language mappings. Entries can use either `:` or `=`, for example:
+
+```bash
+make TESTSET_NAME=bouquet \
+  TESTSET_BY_LANGPAIR="en-tr:bouquet-en-tr tr-en:bouquet-tr-en en-kmr:bouquet-en-kmr kmr-en:bouquet-kmr-en" \
+  testdata
+```
+
+Mapped test corpora are also excluded from the default OPUS training set. If the files are stored under `testsets/<src>-<trg>/`, the expected names are `<testset>.<srcext>.<PRE>.gz` and `<testset>.<trgext>.<PRE>.gz`; otherwise the normal `work/data/<PRE>/<testset>.<langpair>.clean.<lang>.gz` lookup is used.
+
+When per-language or per-direction test mappings are set, `KEEP_FULL_TESTSET` defaults to 1 so external benchmarks are not truncated to `TESTSIZE`. Set `KEEP_FULL_TESTSET=0` if you intentionally want the old global cap.
+
+BOUQuET sentence-level dev files can be converted from Hugging Face into Moses format with:
+
+```bash
+make SRCLANGS="en tr kmr" TRGLANGS="en tr kmr" bouquet-data
+```
+
+The default `BOUQUET_LANGS` covers Turkish, English, German, Spanish, French, Greek, Bulgarian, Russian, Georgian, Armenian, Persian, Central Kurdish, Urdu, and Kurmanji Kurdish:
+
+```make
+BOUQUET_LANGS = tur_Latn:tr eng_Latn:en deu_Latn:de spa_Latn:es fra_Latn:fr \
+                ell_Grek:el bul_Cyrl:bg rus_Cyrl:ru kat_Geor:ka hye_Armn:hy \
+                pes_Arab:fa ckb_Arab:ckb urd_Arab:ur kmr_Latn:kmr
+```
+
+The BOUQuET sentence-level dev split does not publish Standard Arabic
+`arb_Arab.parquet` in the current `main` revision. The available Arabic files in
+that split are dialectal, for example `apc_Arab` and `arz_Arab`, so they are not
+mapped to `ar` by default.
+
+The converter writes files under `work/data/simple`. With the default `BOUQUET_CORPUS_MODES="pair target"`, it writes both direction-specific corpora such as `bouquet-dev-en-tr` and target-language corpora such as `bouquet-dev-tr`. It also writes a JSON file with suggested mapping strings to `work/<LANGPAIRSTR>/test/bouquet-dev.testsets.json`.
 
 
 
@@ -225,6 +261,26 @@ work/data/simple/mytrain.ckb-en.clean.ckb.gz
 The CSV header can use the language IDs (`en`, `ckb`) or the generic names `SRCLANGS` and `TRGLANGS`. Use `--src-column` and `--trg-column` if the CSV has different column names.
 
 The training Makefile may request `.strict.*.gz` files internally. Those are derived from `.clean.*.gz` by the existing preprocessing rules, so the CSV converter only needs to create the `.clean.*.gz` files.
+
+CSV datasets can also be loaded directly from Hugging Face. The downloader reads `HF_TOKEN` from the environment or from `.env`, which is needed for private datasets. For example, a private three-column CSV with headers `en`, `tr`, and `kmr` can be trained as a multilingual model with:
+
+```
+make LANGS="en tr kmr" \
+  HF_CSV_REPO="TartarusXXX/synthetic-en-tr-kmr-1-4m-gemini-3-1-flash-lite" \
+  HF_CSV_FILE="synthetic_en_tr_kmr_1_4m_gemini_3_1_flash_lite.csv" \
+  HF_CSV_CORPUS="synthetic_en_tr_kmr_1_4m_gemini_3_1_flash_lite" \
+  hf-csv-multilingual
+```
+
+The CSV is cached under `work/data/hf` and converted into all non-identical language-pair files under `work/data/simple`. The convenience target uses that corpus for validation/test selection and trains on the remaining rows, using the existing `USE_REST_DEVDATA=1` flow. It also sets `SKIP_SAME_LANG=1`; use the lower-level `hf-csv-data` target if you only want to download and convert:
+
+```
+make SRCLANGS="en tr kmr" TRGLANGS="en tr kmr" \
+  HF_CSV_REPO="TartarusXXX/synthetic-en-tr-kmr-1-4m-gemini-3-1-flash-lite" \
+  HF_CSV_FILE="synthetic_en_tr_kmr_1_4m_gemini_3_1_flash_lite.csv" \
+  HF_CSV_CORPUS="synthetic_en_tr_kmr_1_4m_gemini_3_1_flash_lite" \
+  hf-csv-data
+```
 
 
 

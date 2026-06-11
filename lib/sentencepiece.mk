@@ -31,8 +31,19 @@ SPMEXTRA =
 GENERATE_SPM_VOC = 0
 
 # SPM_INPUT_SIZE  = 10000000
-SPM_INPUT_SIZE    = 2000000
+# Default: 0 disables SentencePiece's input sampling and truncation
+SPM_INPUT_SIZE    = 0
 SPM_SHUFFLE_INPUT = 0
+
+# Choose whether to truncate input with head or pass through with cat.
+# Set SPM_INPUT_SIZE=0 to disable truncation and sentencepiece's input_sentence_size.
+ifneq ($(SPM_INPUT_SIZE),0)
+	SPM_HEAD = head -${SPM_INPUT_SIZE}
+	SPM_HEAD_HALF = head -$$(($(SPM_INPUT_SIZE)/2))
+else
+	SPM_HEAD = cat
+	SPM_HEAD_HALF = cat
+endif
 
 ifneq (${DATA_IS_SHUFFLED},1)
   SPM_PREPROCESS = grep . | ${SHUFFLE}
@@ -78,9 +89,9 @@ ifneq (${wildcard ${SPMSRCMODEL}},)
 else
 	mkdir -p ${dir $@}
 ifeq (${USE_TARGET_LABELS},1)
-	cut -f2- -d ' ' ${LOCAL_TRAIN_SRC} | ${SPM_PREPROCESS} | head -${SPM_INPUT_SIZE} > ${LOCAL_TRAIN_SRC}.text
+	cut -f2- -d ' ' ${LOCAL_TRAIN_SRC} | ${SPM_PREPROCESS} | $(SPM_HEAD) > ${LOCAL_TRAIN_SRC}.text
 else
-	cat ${LOCAL_TRAIN_SRC} | ${SPM_PREPROCESS} | head -${SPM_INPUT_SIZE} > ${LOCAL_TRAIN_SRC}.text
+	cat ${LOCAL_TRAIN_SRC} | ${SPM_PREPROCESS} | $(SPM_HEAD) > ${LOCAL_TRAIN_SRC}.text
 endif
 	${MAKE} ${LOCAL_TRAIN_SRC}.charfreq
 	if [ `cat ${LOCAL_TRAIN_SRC}.charfreq | wc -l` -gt 1000 ]; then \
@@ -113,7 +124,7 @@ ifneq (${wildcard ${SPMTRGMODEL}},)
 	touch -r $@ $<
 else
 	mkdir -p ${dir $@}
-	cat ${LOCAL_TRAIN_TRG} | ${SPM_PREPROCESS} | head -${SPM_INPUT_SIZE} > ${LOCAL_TRAIN_TRG}.text
+	cat ${LOCAL_TRAIN_TRG} | ${SPM_PREPROCESS} | $(SPM_HEAD) > ${LOCAL_TRAIN_TRG}.text
 	${MAKE} ${LOCAL_TRAIN_TRG}.charfreq
 	if [ `cat ${LOCAL_TRAIN_TRG}.charfreq | wc -l` -gt 1000 ]; then \
 	  ${SPM_TRAIN} ${SPMEXTRA} --byte_fallback \
@@ -151,8 +162,8 @@ ifneq (${wildcard ${SPM_MODEL}},)
 	touch -r $@ $<
 else
 	mkdir -p ${dir $@}
-	cat ${LOCAL_TRAIN_TRG} | ${SPM_PREPROCESS} | head -$$((${SPM_INPUT_SIZE}/2)) > ${LOCAL_TRAIN}.tmp
-	cat ${LOCAL_TRAIN_TRG} | ${SPM_PREPROCESS} | head -$$((${SPM_INPUT_SIZE}/2)) >> ${LOCAL_TRAIN}.tmp
+	cat ${LOCAL_TRAIN_TRG} | ${SPM_PREPROCESS} | $(SPM_HEAD_HALF) > ${LOCAL_TRAIN}.tmp
+	cat ${LOCAL_TRAIN_TRG} | ${SPM_PREPROCESS} | $(SPM_HEAD_HALF) >> ${LOCAL_TRAIN}.tmp
 	${SHUFFLE} < ${LOCAL_TRAIN}.tmp > ${LOCAL_TRAIN}.text
 	rm -f ${LOCAL_TRAIN}.tmp
 	${MAKE} ${LOCAL_TRAIN}.text.charfreq
@@ -241,7 +252,7 @@ endif
 ${SPM_MONO}: ${LOCAL_MONO_DATA}.${PRE}
 ifeq ($(wildcard ${SPM_MONO}),)
 	mkdir -p ${dir $@}
-	cat $< | ${SPM_PREPROCESS} | head -${SPM_INPUT_SIZE} > $<.text
+	cat $< | ${SPM_PREPROCESS} | $(SPM_HEAD) > $<.text
 	${MAKE} ${LOCAL_MONO_DATA}.${PRE}.charfreq
 	if [ `cat ${LOCAL_MONO_DATA}.${PRE}.charfreq | wc -l` -gt 1000 ]; then \
 	  ${SPM_TRAIN} ${SPMEXTRA} \
@@ -283,12 +294,12 @@ endif
 ## restrict to 1 million lines
 %.charfreq: %
 	head -1000000 $< > $<.1m
-	-python -c "import collections, pprint; pprint.pprint(dict(collections.Counter(open('$<.1m', 'r').read())))" > $@
+	-${PYTHON} -c "import collections, pprint; pprint.pprint(dict(collections.Counter(open('$<.1m', 'r').read())))" > $@
 	rm -f $<.1m
 
 %.charfreq: %.gz
 	${GZIP} -cd < $< | head -1000000 > $<.1m
-	-python -c "import collections, pprint; pprint.pprint(dict(collections.Counter(open('$<.1m', 'r').read())))" > $@
+	-${PYTHON} -c "import collections, pprint; pprint.pprint(dict(collections.Counter(open('$<.1m', 'r').read())))" > $@
 	rm -f $<.1m
 
 
@@ -354,4 +365,3 @@ endif
 
 %.trg.${SUBWORDS}${SUBWORD_TRGVOCAB_SIZE:000=}k.doc${CONTEXT_SIZE}: %.src.${SUBWORDS}${SUBWORD_TRGVOCAB_SIZE:000=}k.doc${CONTEXT_SIZE}
 	@echo "done!"
-

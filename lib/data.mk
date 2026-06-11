@@ -325,7 +325,12 @@ ${WORKDIR}/train/size_per_language_pair.txt: ${LOCAL_TRAINDATA_DEPENDENCIES}
 	  for t in ${TRGLANGS}; do \
 	    if [ ! `echo "$$s-$$t $$t-$$s" | egrep '${SKIP_LANGPAIRS}' | wc -l` -gt 0 ]; then \
 	      if [ "${SKIP_SAME_LANG}" != "1" ] || [ "$$s" != "$$t" ]; then \
-	        ${MAKE} DATASET=${DATASET} SRC:=$$s TRG:=$$t add-size-per-language-pair-info; \
+	        ${MAKE} DATASET="${DATASET}" TRAINSET="${TRAINSET}" \
+			DEVSET="${DEVSET}" TESTSET="${TESTSET}" \
+			CLEAN_TRAINDATA_TYPE="${CLEAN_TRAINDATA_TYPE}" \
+			CLEAN_DEVDATA_TYPE="${CLEAN_DEVDATA_TYPE}" \
+			CLEAN_TESTDATA_TYPE="${CLEAN_TESTDATA_TYPE}" \
+			SRC=$$s TRG=$$t add-size-per-language-pair-info; \
 	      fi \
 	    fi \
 	  done \
@@ -337,14 +342,58 @@ ${WORKDIR}/train/size_per_language_pair.txt: ${LOCAL_TRAINDATA_DEPENDENCIES}
 
 
 
-.PHONY: clean-data rawdata
+.PHONY: clean-data rawdata hf-csv-data bouquet-data
+hf-csv-data:
+ifndef HF_CSV_REPO
+	$(error Set HF_CSV_REPO to a Hugging Face dataset repo id)
+endif
+	${REPOHOME}scripts/hf_csv2moses.py \
+		--repo-id "${HF_CSV_REPO}" \
+		$(if ${HF_CSV_FILE},--filename "${HF_CSV_FILE}") \
+		--revision "${HF_CSV_REVISION}" \
+		--src-langs ${HF_CSV_SRCLANGS} \
+		--trg-langs ${HF_CSV_TRGLANGS} \
+		--corpus "${HF_CSV_CORPUS}" \
+		$(if ${HF_CSV_OVERWRITE},--overwrite)
+
+bouquet-data:
+	${PYTHON} ${REPOHOME}scripts/bouquet2moses.py \
+		--repo-id "${BOUQUET_REPO}" \
+		--revision "${BOUQUET_REVISION}" \
+		--split-dir "${BOUQUET_SPLIT_DIR}" \
+		--langs ${BOUQUET_LANGS} \
+		$(if ${BOUQUET_SRCLANGS},--src-langs ${BOUQUET_SRCLANGS}) \
+		$(if ${BOUQUET_TRGLANGS},--trg-langs ${BOUQUET_TRGLANGS}) \
+		--corpus-prefix "${BOUQUET_CORPUS_PREFIX}" \
+		--corpus-modes ${BOUQUET_CORPUS_MODES} \
+		--write-map "${WORKDIR}/test/${BOUQUET_CORPUS_PREFIX}.testsets.json" \
+		$(if ${BOUQUET_OVERWRITE},--overwrite)
+
 clean-data rawdata:
+ifdef HF_CSV_REPO
+	@${MAKE} hf-csv-data
+else
 	@for s in ${SRCLANGS}; do \
 	  for t in ${TRGLANGS}; do \
-	    echo "..... create raw data for $$s-$$t"; \
-	    ${MAKE} SRC=$$s TRG=$$t clean-data-source; \
+	    if [ ! `echo "$$s-$$t $$t-$$s" | egrep '${SKIP_LANGPAIRS}' | wc -l` -gt 0 ]; then \
+	      if [ "${SKIP_SAME_LANG}" == "1" ] && [ "$$s" == "$$t" ]; then \
+	        echo "!!!!!!!!!!! skip language pair $$s-$$t !!!!!!!!!!!!!!!!"; \
+	      else \
+	        echo "..... create raw data for $$s-$$t"; \
+	        ${MAKE} SRC=$$s TRG=$$t \
+			DATASET="${DATASET}" TRAINSET="${TRAINSET}" \
+			DEVSET="${DEVSET}" TESTSET="${TESTSET}" \
+			CLEAN_TRAINDATA_TYPE="${CLEAN_TRAINDATA_TYPE}" \
+			CLEAN_DEVDATA_TYPE="${CLEAN_DEVDATA_TYPE}" \
+			CLEAN_TESTDATA_TYPE="${CLEAN_TESTDATA_TYPE}" \
+			clean-data-source; \
+	      fi \
+	    else \
+	      echo "!!!!!!!!!!! skip language pair $$s-$$t !!!!!!!!!!!!!!!!"; \
+	    fi \
 	  done \
 	done
+endif
 
 .PHONY: clean-data-source
 clean-data-source: 
@@ -558,7 +607,12 @@ ${LOCAL_TRAIN_SRC}: ${LOCAL_TRAINDATA_DEPENDENCIES}
 	        echo "!!!!!!!!!!! skip language pair $$s-$$t !!!!!!!!!!!!!!!!"; \
 	      else \
 	        echo "..... add data for $$s-$$t"; \
-	        ${MAKE} DATASET=${DATASET} SRC:=$$s TRG:=$$t add-to-local-train-data; \
+	        ${MAKE} DATASET="${DATASET}" TRAINSET="${TRAINSET}" \
+			DEVSET="${DEVSET}" TESTSET="${TESTSET}" \
+			CLEAN_TRAINDATA_TYPE="${CLEAN_TRAINDATA_TYPE}" \
+			CLEAN_DEVDATA_TYPE="${CLEAN_DEVDATA_TYPE}" \
+			CLEAN_TESTDATA_TYPE="${CLEAN_TESTDATA_TYPE}" \
+			SRC=$$s TRG=$$t add-to-local-train-data; \
 	      fi \
 	    else \
 	      echo "!!!!!!!!!!! skip language pair $$s-$$t !!!!!!!!!!!!!!!!"; \
@@ -743,13 +797,37 @@ ${DEV_SRC}.shuffled.gz:
 	rm -f ${DEV_SRC} ${DEV_TRG}
 	echo "# Validation data"                         > ${dir ${DEV_SRC}}README.md
 	echo ""                                         >> ${dir ${DEV_SRC}}README.md
-	-for s in ${SRCLANGS}; do \
-	  for t in ${TRGLANGS}; do \
+		-for s in ${DEV_SRCLANGS}; do \
+		  for t in ${DEV_TRGLANGS}; do \
 	    if [ ! `echo "$$s-$$t $$t-$$s" | egrep '${SKIP_LANGPAIRS}' | wc -l` -gt 0 ]; then \
 	      if [ "${SKIP_SAME_LANG}" == "1" ] && [ "$$s" == "$$t" ]; then \
 	        echo "!!!!!!!!!!! skip language pair $$s-$$t !!!!!!!!!!!!!!!!"; \
-	      else \
-	        ${MAKE} SRC=$$s TRG=$$t add-to-dev-data; \
+		      else \
+		        pair_devset="${DEVSET}"; \
+		        for devset_cfg in ${DEVSET_BY_TRGLANG}; do \
+		          case "$$devset_cfg" in \
+		            $$t:*) pair_devset="$${devset_cfg#*:}" ;; \
+		            $$t=*) pair_devset="$${devset_cfg#*=}" ;; \
+		          esac; \
+		        done; \
+		        for devset_cfg in ${DEVSET_BY_LANGPAIR}; do \
+		          case "$$devset_cfg" in \
+		            $$s-$$t:*) pair_devset="$${devset_cfg#*:}" ;; \
+		            $$s-$$t=*) pair_devset="$${devset_cfg#*=}" ;; \
+		          esac; \
+		        done; \
+		        ${MAKE} SRC=$$s TRG=$$t \
+				SRCLANGS="${SRCLANGS}" TRGLANGS="${TRGLANGS}" \
+				DEV_SRCLANGS="${DEV_SRCLANGS}" DEV_TRGLANGS="${DEV_TRGLANGS}" \
+				LANGPAIRSTR="${LANGPAIRSTR}" DEVSET_NAME="${DEVSET_NAME}" \
+				DEV_SRC="${DEV_SRC}" DEV_TRG="${DEV_TRG}" \
+				DATASET="${DATASET}" TRAINSET="${TRAINSET}" \
+				DEVSET="$$pair_devset" TESTSET="${TESTSET}" \
+				CLEAN_TRAINDATA_TYPE="${CLEAN_TRAINDATA_TYPE}" \
+				CLEAN_DEVDATA_TYPE="${CLEAN_DEVDATA_TYPE}" \
+				CLEAN_TESTDATA_TYPE="${CLEAN_TESTDATA_TYPE}" \
+				FIT_DEVDATA_SIZE="${FIT_DEVDATA_SIZE}" \
+				add-to-dev-data; \
 	      fi \
 	    else \
 	      echo "!!!!!!!!!!! skip language pair $$s-$$t !!!!!!!!!!!!!!!!"; \
@@ -774,6 +852,11 @@ endif
 ## --> extract some data from the training data to be used as devdata
 
 ${DEV_SRC}: %: %.shuffled.gz
+ifeq (${KEEP_FULL_DEVSET},1)
+		@echo "keep full ${DEVSET} dev set"
+		@${GZIP} -cd < $< | cut -f1 > ${DEV_SRC}
+		@${GZIP} -cd < $< | cut -f2 > ${DEV_TRG}
+else
 ## if we extract test and dev data from the same data set
 ## ---> make sure that we do not have any overlap between the two data sets
 ## ---> reserve at least DEVMINSIZE data for dev data and keep the rest for testing
@@ -812,11 +895,12 @@ else
 	@${GZIP} -cd < $< | cut -f1 | tail -n +$$((${DEVSIZE} + 1)) | ${GZIP} -c > ${DEV_SRC}.notused.gz
 	@${GZIP} -cd < $< | cut -f2 | tail -n +$$((${DEVSIZE} + 1)) | ${GZIP} -c > ${DEV_TRG}.notused.gz
 endif
-	@echo ""                                         >> ${dir ${DEV_SRC}}/README.md
-	@echo -n "* devset-selected: top "               >> ${dir ${DEV_SRC}}/README.md
+endif
+		@echo ""                                         >> ${dir ${DEV_SRC}}/README.md
+		@echo -n "* devset-selected: top "               >> ${dir ${DEV_SRC}}/README.md
 	@wc -l < ${DEV_SRC} | tr "\n" ' '                >> ${dir ${DEV_SRC}}/README.md
 	@echo " lines of ${notdir $@}.shuffled"          >> ${dir ${DEV_SRC}}/README.md
-ifeq (${DEVSET},${TESTSET})
+ifeq (${USE_SEPARATE_TESTSET},0)
 	@echo -n "* testset-selected: next "             >> ${dir ${DEV_SRC}}/README.md
 	@wc -l < ${TEST_SRC} | tr "\n" ' '               >> ${dir ${DEV_SRC}}/README.md
 	@echo " lines of ${notdir $@}.shuffled "         >> ${dir ${DEV_SRC}}/README.md
@@ -865,7 +949,7 @@ endif
 ## --> just use that one
 
 ${TEST_SRC}: ${DEV_SRC}
-ifneq (${TESTSET},${DEVSET})
+ifeq (${USE_SEPARATE_TESTSET},1)
 	mkdir -p ${dir $@}
 	rm -f ${TEST_SRC} ${TEST_TRG}
 	echo "# Test data"                         > ${dir ${TEST_SRC}}/README.md
@@ -875,20 +959,43 @@ ifneq (${TESTSET},${DEVSET})
 		  CLEAN_TEST_TRG=${TESTSET_DIR}/${TESTSET}.${TRGEXT}.${PRE}.gz \
 	  add-to-test-data; \
 	elif [ ! -e $@ ]; then \
-	  for s in ${SRCLANGS}; do \
-	    for t in ${TRGLANGS}; do \
+	  for s in ${TEST_SRCLANGS}; do \
+	    for t in ${TEST_TRGLANGS}; do \
 	      if [ ! `echo "$$s-$$t $$t-$$s" | egrep '${SKIP_LANGPAIRS}' | wc -l` -gt 0 ]; then \
 	        if [ "${SKIP_SAME_LANG}" == "1" ] && [ "$$s" == "$$t" ]; then \
 	          echo "!!!!!!!!!!! skip language pair $$s-$$t !!!!!!!!!!!!!!!!"; \
 	        else \
-	          ${MAKE} SRC=$$s TRG=$$t add-to-test-data; \
-	        fi \
-	      else \
-	        echo "!!!!!!!!!!! skip language pair $$s-$$t !!!!!!!!!!!!!!!!"; \
+		          pair_testset="${TESTSET}"; \
+		          for testset_cfg in ${TESTSET_BY_TRGLANG}; do \
+		            case "$$testset_cfg" in \
+		              $$t:*) pair_testset="$${testset_cfg#*:}" ;; \
+		              $$t=*) pair_testset="$${testset_cfg#*=}" ;; \
+		            esac; \
+		          done; \
+		          for testset_cfg in ${TESTSET_BY_LANGPAIR}; do \
+		            case "$$testset_cfg" in \
+		              $$s-$$t:*) pair_testset="$${testset_cfg#*:}" ;; \
+		              $$s-$$t=*) pair_testset="$${testset_cfg#*=}" ;; \
+		            esac; \
+		          done; \
+		          ${MAKE} SRC=$$s TRG=$$t \
+				SRCLANGS="${SRCLANGS}" TRGLANGS="${TRGLANGS}" \
+				TEST_SRCLANGS="${TEST_SRCLANGS}" TEST_TRGLANGS="${TEST_TRGLANGS}" \
+				LANGPAIRSTR="${LANGPAIRSTR}" TESTSET_NAME="${TESTSET_NAME}" \
+				TEST_SRC="${TEST_SRC}" TEST_TRG="${TEST_TRG}" \
+				DATASET="${DATASET}" TRAINSET="${TRAINSET}" \
+				DEVSET="${DEVSET}" TESTSET="$$pair_testset" \
+				CLEAN_TRAINDATA_TYPE="${CLEAN_TRAINDATA_TYPE}" \
+				CLEAN_DEVDATA_TYPE="${CLEAN_DEVDATA_TYPE}" \
+				CLEAN_TESTDATA_TYPE="${CLEAN_TESTDATA_TYPE}" \
+				add-to-test-data-for-langpair; \
+		        fi \
+		      else \
+		        echo "!!!!!!!!!!! skip language pair $$s-$$t !!!!!!!!!!!!!!!!"; \
 	      fi \
 	    done \
 	  done; \
-	  if [ ${TESTSIZE} -lt `cat $@ | wc -l` ]; then \
+		  if [ "${KEEP_FULL_TESTSET}" != "1" ] && [ ${TESTSIZE} -lt `cat $@ | wc -l` ]; then \
 	    paste ${TEST_SRC} ${TEST_TRG} | ${SHUFFLE} | ${GZIP} -c > $@.shuffled.gz; \
 	    ${GZIP} -cd < $@.shuffled.gz | cut -f1 | tail -${TESTSIZE} > ${TEST_SRC}; \
 	    ${GZIP} -cd < $@.shuffled.gz | cut -f2 | tail -${TESTSIZE} > ${TEST_TRG}; \
@@ -916,6 +1023,17 @@ endif
 
 ${TEST_TRG}: ${TEST_SRC}
 	@echo "done!"
+
+.PHONY: add-to-test-data-for-langpair
+add-to-test-data-for-langpair:
+	@if [ -e ${TESTSET_DIR}/${TESTSET}.${SRCEXT}.${PRE}.gz ]; then \
+	  ${MAKE} CLEAN_TEST_SRC=${TESTSET_DIR}/${TESTSET}.${SRCEXT}.${PRE}.gz \
+		  CLEAN_TEST_TRG=${TESTSET_DIR}/${TESTSET}.${TRGEXT}.${PRE}.gz \
+		  TEST_SRC="${TEST_SRC}" TEST_TRG="${TEST_TRG}" \
+		  add-to-test-data; \
+	else \
+	  ${MAKE} TEST_SRC="${TEST_SRC}" TEST_TRG="${TEST_TRG}" add-to-test-data; \
+	fi
 
 .PHONY: add-to-test-data
 add-to-test-data: ${CLEAN_TEST_SRC}
@@ -984,5 +1102,3 @@ endif
 include ${REPOHOME}lib/preprocess.mk
 include ${REPOHOME}lib/bpe.mk
 include ${REPOHOME}lib/sentencepiece.mk
-
-

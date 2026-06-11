@@ -14,6 +14,24 @@
 TRAINSET_NAME ?= opus
 DATASET       ?= ${TRAINSET_NAME}
 
+## Hugging Face CSV datasets can be converted directly into work/data/simple.
+## Set HF_CSV_REPO to enable this path. HF_CSV_FILE is optional when the
+## dataset repository contains exactly one CSV file.
+HF_CSV_REVISION ?= main
+HF_CSV_CORPUS   ?= $(if ${HF_CSV_FILE},$(basename $(notdir ${HF_CSV_FILE})),hf-csv)
+HF_CSV_SRCLANGS ?= $(if $(strip ${SRCLANGS}),${SRCLANGS},${LANGS})
+HF_CSV_TRGLANGS ?= $(if $(strip ${TRGLANGS}),${TRGLANGS},${LANGS})
+
+## BOUQuET sentence-level dev data can be converted to Moses/OPUS-MT files.
+BOUQUET_REPO          ?= facebook/bouquet
+BOUQUET_REVISION      ?= main
+BOUQUET_SPLIT_DIR     ?= data/sentence_level/dev
+BOUQUET_CORPUS_PREFIX ?= bouquet-dev
+BOUQUET_CORPUS_MODES  ?= pair target
+BOUQUET_LANGS         ?= tur_Latn:tr eng_Latn:en deu_Latn:de spa_Latn:es fra_Latn:fr ell_Grek:el bul_Cyrl:bg rus_Cyrl:ru kat_Geor:ka hye_Armn:hy pes_Arab:fa ckb_Arab:ckb urd_Arab:ur kmr_Latn:kmr
+BOUQUET_SRCLANGS      ?= $(if $(strip ${SRCLANGS}),${SRCLANGS},)
+BOUQUET_TRGLANGS      ?= $(if $(strip ${TRGLANGS}),${TRGLANGS},)
+
 ## various ways of setting the model languages
 ##
 ## (1) explicitly set source and target languages, for example:
@@ -40,7 +58,7 @@ LANGPAIRSTR   ?= ${LANGSRCSTR}-${LANGTRGSTR}
 WORKDIR        = ${WORKHOME}/${LANGPAIRSTR}
 
 ## default model type
-MODELTYPE    =  transformer-align
+MODELTYPE    ?=  transformer-align
 
 
 
@@ -335,8 +353,33 @@ endif
 
 ## TESTSET= DEVSET, TRAINSET = OPUS - WMT-News,DEVSET.TESTSET
 TESTSET  ?= ${DEVSET}
-TRAINSET ?= $(filter-out ${EXCLUDE_CORPORA} ${DEVSET} ${TESTSET},${OPUSCORPORA} ${EXTRA_TRAINSET})
-MONOSET  ?= $(filter-out ${EXCLUDE_CORPORA} ${DEVSET} ${TESTSET},${OPUSMONOCORPORA} ${EXTRA_TRAINSET})
+
+## Optional multilingual dev/test-set overrides.
+## DEVSET_BY_LANGPAIR uses entries like "en-tr:bouquet-dev-en-tr tr-en:bouquet-dev-tr-en".
+## DEVSET_BY_TRGLANG uses entries like "tr:bouquet-dev-tr kmr:bouquet-dev-kmr".
+## TESTSET_BY_LANGPAIR uses entries like "en-tr:bouquet-test-en-tr tr-en:bouquet-test-tr-en".
+## TESTSET_BY_TRGLANG uses entries like "tr:bouquet-test-tr kmr:bouquet-test-kmr".
+DEVSET_BY_LANGPAIR ?=
+DEVSET_BY_TRGLANG  ?=
+TESTSET_BY_LANGPAIR ?=
+TESTSET_BY_TRGLANG  ?=
+DEV_SRCLANGS ?= ${SRCLANGS}
+DEV_TRGLANGS ?= ${TRGLANGS}
+TEST_SRCLANGS ?= ${SRCLANGS}
+TEST_TRGLANGS ?= ${TRGLANGS}
+DEVSET_BY_LANGPAIR_CORPORA = ${sort ${foreach t,${DEVSET_BY_LANGPAIR},${lastword ${subst :, ,${subst =, ,${t}}}}}}
+DEVSET_BY_TRGLANG_CORPORA  = ${sort ${foreach t,${DEVSET_BY_TRGLANG},${lastword ${subst :, ,${subst =, ,${t}}}}}}
+DEVSET_BY_LANG_CORPORA     = ${sort ${DEVSET_BY_LANGPAIR_CORPORA} ${DEVSET_BY_TRGLANG_CORPORA}}
+TESTSET_BY_LANGPAIR_CORPORA = ${sort ${foreach t,${TESTSET_BY_LANGPAIR},${lastword ${subst :, ,${subst =, ,${t}}}}}}
+TESTSET_BY_TRGLANG_CORPORA  = ${sort ${foreach t,${TESTSET_BY_TRGLANG},${lastword ${subst :, ,${subst =, ,${t}}}}}}
+TESTSET_BY_LANG_CORPORA     = ${sort ${TESTSET_BY_LANGPAIR_CORPORA} ${TESTSET_BY_TRGLANG_CORPORA}}
+
+USE_SEPARATE_TESTSET = $(if $(strip ${TESTSET_BY_LANG_CORPORA}),1,$(if $(filter-out ${DEVSET},${TESTSET}),1,0))
+KEEP_FULL_TESTSET ?= $(if $(strip ${TESTSET_BY_LANG_CORPORA}),1,0)
+KEEP_FULL_DEVSET ?= $(if $(strip ${DEVSET_BY_LANG_CORPORA}),1,0)
+
+TRAINSET ?= $(filter-out ${EXCLUDE_CORPORA} ${DEVSET} ${TESTSET} ${DEVSET_BY_LANG_CORPORA} ${TESTSET_BY_LANG_CORPORA},${OPUSCORPORA} ${EXTRA_TRAINSET})
+MONOSET  ?= $(filter-out ${EXCLUDE_CORPORA} ${DEVSET} ${TESTSET} ${DEVSET_BY_LANG_CORPORA} ${TESTSET_BY_LANG_CORPORA},${OPUSMONOCORPORA} ${EXTRA_TRAINSET})
 
 ## 1 = use remaining data from dev/test data for training
 USE_REST_DEVDATA ?= 1
@@ -698,9 +741,9 @@ endif
 
 ## decoder flags (CPU and GPU variants)
 
-MARIAN_BEAM_SIZE = 4
-MARIAN_MINI_BATCH = 256
-MARIAN_MAXI_BATCH = 512
+MARIAN_BEAM_SIZE ?= 4
+MARIAN_MINI_BATCH ?= 256
+MARIAN_MAXI_BATCH ?= 512
 # MARIAN_MINI_BATCH = 512
 # MARIAN_MAXI_BATCH = 1024
 # MARIAN_MINI_BATCH = 768
@@ -839,6 +882,18 @@ ${WORKDIR}/${MODELCONFIG}:
 	@echo "TRAINSET    = ${TRAINSET}"    >> $@
 	@echo "DEVSET      = ${DEVSET}"      >> $@
 	@echo "TESTSET     = ${TESTSET}"     >> $@
+	@echo "DEVSET_NAME = ${DEVSET_NAME}" >> $@
+	@echo "TESTSET_NAME = ${TESTSET_NAME}" >> $@
+	@echo "DEVSET_BY_LANGPAIR = ${DEVSET_BY_LANGPAIR}" >> $@
+	@echo "DEVSET_BY_TRGLANG  = ${DEVSET_BY_TRGLANG}" >> $@
+	@echo "TESTSET_BY_LANGPAIR = ${TESTSET_BY_LANGPAIR}" >> $@
+	@echo "TESTSET_BY_TRGLANG  = ${TESTSET_BY_TRGLANG}" >> $@
+	@echo "DEV_SRCLANGS  = ${DEV_SRCLANGS}" >> $@
+	@echo "DEV_TRGLANGS  = ${DEV_TRGLANGS}" >> $@
+	@echo "TEST_SRCLANGS = ${TEST_SRCLANGS}" >> $@
+	@echo "TEST_TRGLANGS = ${TEST_TRGLANGS}" >> $@
+	@echo "KEEP_FULL_DEVSET  = ${KEEP_FULL_DEVSET}" >> $@
+	@echo "KEEP_FULL_TESTSET = ${KEEP_FULL_TESTSET}" >> $@
 	@echo "PRE         = ${PRE}"         >> $@
 	@echo "SUBWORDS    = ${SUBWORDS}"    >> $@
 ifdef SHUFFLE_DATA

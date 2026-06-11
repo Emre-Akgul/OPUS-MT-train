@@ -6,6 +6,7 @@ import gzip
 import itertools
 import json
 import os
+import random
 import re
 import shutil
 import sys
@@ -76,6 +77,37 @@ def parse_args():
         "--keep-empty",
         action="store_true",
         help="Keep rows where either side is empty. Default: skip them.",
+    )
+    parser.add_argument(
+        "--nway-train-src",
+        help=(
+            "Write a direct N-way training source file instead of pair files. "
+            "Each CSV row is read once and projected from one source language "
+            "to the selected target languages with target labels."
+        ),
+    )
+    parser.add_argument(
+        "--nway-train-trg",
+        help="Write the direct N-way training target file used with --nway-train-src.",
+    )
+    parser.add_argument(
+        "--nway-source-lang",
+        help="Source language column for direct N-way training. Defaults to the first source language.",
+    )
+    parser.add_argument(
+        "--nway-shuffle-buffer",
+        type=int,
+        default=0,
+        help=(
+            "Shuffle direct N-way training examples in chunks of this many examples. "
+            "Default: 0 disables converter-side shuffling."
+        ),
+    )
+    parser.add_argument(
+        "--nway-shuffle-seed",
+        type=int,
+        default=1,
+        help="Random seed for --nway-shuffle-buffer. Default: 1.",
     )
     parser.add_argument("--overwrite", action="store_true", help="Overwrite outputs.")
     return parser.parse_args()
@@ -355,6 +387,110 @@ def convert_csv(csv_path, args, corpus, src_langs, trg_langs):
         print(outputs[pair][1])
 
 
+def convert_nway_train(csv_path, args, src_langs, trg_langs):
+    if not args.nway_train_src or not args.nway_train_trg:
+        raise SystemExit("Set both --nway-train-src and --nway-train-trg.")
+
+    source_lang = args.nway_source_lang or src_langs[0]
+    target_langs = [lang for lang in trg_langs if lang != source_lang]
+    if not target_langs:
+        raise SystemExit("No N-way target languages selected.")
+
+    src_path = Path(args.nway_train_src)
+    trg_path = Path(args.nway_train_trg)
+    existing = [str(path) for path in (src_path, trg_path) if path.exists()]
+    if existing and not args.overwrite:
+        raise SystemExit(
+            "N-way training output files already exist; use --overwrite to replace them: "
+            + ", ".join(existing)
+        )
+
+    src_path.parent.mkdir(parents=True, exist_ok=True)
+    trg_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_src = src_path.with_name(src_path.name + ".tmp")
+    tmp_trg = trg_path.with_name(trg_path.name + ".tmp")
+    written = {lang: 0 for lang in target_langs}
+    skipped = 0
+    rng = random.Random(args.nway_shuffle_seed)
+    buffer = []
+
+    def write_buffer(src_out, trg_out):
+        if not buffer:
+            return
+        rng.shuffle(buffer)
+        for src_text, trg_text in buffer:
+            src_out.write(src_text)
+            trg_out.write(trg_text)
+        buffer.clear()
+
+    def write_example(src_out, trg_out, src_text, trg_text):
+        if args.nway_shuffle_buffer > 0:
+            buffer.append((src_text, trg_text))
+            if len(buffer) >= args.nway_shuffle_buffer:
+                write_buffer(src_out, trg_out)
+        else:
+            src_out.write(src_text)
+            trg_out.write(trg_text)
+
+    try:
+        with (
+            Path(csv_path).open("r", encoding=args.encoding, newline="") as input_file,
+            tmp_src.open("w", encoding="utf-8") as src_out,
+            tmp_trg.open("w", encoding="utf-8") as trg_out,
+        ):
+            sample = input_file.read(65536)
+            dialect = detect_dialect(sample, args.delimiter)
+            try:
+                input_file.seek(0)
+                csv_input = input_file
+            except OSError:
+                csv_input = itertools.chain(sample.splitlines(True), input_file)
+
+            reader_args = {"dialect": dialect}
+            if args.delimiter:
+                reader_args["delimiter"] = args.delimiter
+            reader = csv.DictReader(csv_input, **reader_args)
+            if not reader.fieldnames:
+                raise SystemExit(f"CSV has no header row: {csv_path}")
+            validate_columns(reader.fieldnames, sorted(set([source_lang] + target_langs)))
+
+            for row in reader:
+                src_text = clean_cell(row.get(source_lang, ""))
+                if not src_text and not args.keep_empty:
+                    skipped += len(target_langs)
+                    continue
+                row_targets = list(target_langs)
+                if args.nway_shuffle_buffer > 0:
+                    rng.shuffle(row_targets)
+                for trg in row_targets:
+                    trg_text = clean_cell(row.get(trg, ""))
+                    if not args.keep_empty and not trg_text:
+                        skipped += 1
+                        continue
+                    write_example(src_out, trg_out, f">>{trg}<< {src_text}\n", trg_text + "\n")
+                    written[trg] += 1
+            write_buffer(src_out, trg_out)
+    except Exception:
+        for path in (tmp_src, tmp_trg):
+            try:
+                path.unlink()
+            except FileNotFoundError:
+                pass
+        raise
+
+    os.replace(tmp_src, src_path)
+    os.replace(tmp_trg, trg_path)
+
+    total = sum(written.values())
+    print(f"nway {source_lang}->targets: wrote {total} sentence pairs")
+    for lang in target_langs:
+        print(f"{source_lang}-{lang}: wrote {written[lang]} sentence pairs")
+    if skipped:
+        print(f"nway {source_lang}->targets: skipped {skipped} rows with an empty side")
+    print(src_path)
+    print(trg_path)
+
+
 def main():
     args = parse_args()
     load_env_file(args.env_file)
@@ -364,7 +500,10 @@ def main():
     csv_path = download_hf_file(args, filename, headers)
     corpus = args.corpus or Path(filename).stem
     src_langs, trg_langs = resolve_langs(args)
-    convert_csv(csv_path, args, corpus, src_langs, trg_langs)
+    if args.nway_train_src or args.nway_train_trg:
+        convert_nway_train(csv_path, args, src_langs, trg_langs)
+    else:
+        convert_csv(csv_path, args, corpus, src_langs, trg_langs)
 
 
 if __name__ == "__main__":

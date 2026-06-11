@@ -17,6 +17,13 @@ HF_CSV_REVISION = main
 DATASET  = ${HF_CSV_CORPUS}
 TRAINSET = ${HF_CSV_CORPUS}
 
+# This CSV is N-way parallel. Build the local Marian train streams directly
+# from each CSV row instead of expanding the row into every language pair.
+HF_CSV_NWAY_TRAIN = 1
+HF_CSV_NWAY_SOURCE_LANG = en
+HF_CSV_NWAY_SHUFFLE_BUFFER = 200000
+HF_CSV_NWAY_SHUFFLE_SEED = 1
+
 # Use BOUQuET as the Marian validation set during training, with a dedicated
 # corpus per target language. BOUQuET does not provide standard Arabic in this
 # split, so ar stays in training and Levantine/Egyptian Arabic are used for

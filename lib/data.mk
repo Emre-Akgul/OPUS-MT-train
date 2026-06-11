@@ -356,6 +356,25 @@ endif
 		--corpus "${HF_CSV_CORPUS}" \
 		$(if ${HF_CSV_OVERWRITE},--overwrite)
 
+.PHONY: hf-csv-nway-train-data
+hf-csv-nway-train-data:
+ifndef HF_CSV_REPO
+	$(error Set HF_CSV_REPO to a Hugging Face dataset repo id)
+endif
+	${REPOHOME}scripts/hf_csv2moses.py \
+		--repo-id "${HF_CSV_REPO}" \
+		$(if ${HF_CSV_FILE},--filename "${HF_CSV_FILE}") \
+		--revision "${HF_CSV_REVISION}" \
+		--src-langs ${HF_CSV_SRCLANGS} \
+		--trg-langs ${HF_CSV_TRGLANGS} \
+		--corpus "${HF_CSV_CORPUS}" \
+		--nway-train-src "${LOCAL_TRAIN_SRC}" \
+		--nway-train-trg "${LOCAL_TRAIN_TRG}" \
+		$(if ${HF_CSV_NWAY_SOURCE_LANG},--nway-source-lang "${HF_CSV_NWAY_SOURCE_LANG}") \
+		$(if ${HF_CSV_NWAY_SHUFFLE_BUFFER},--nway-shuffle-buffer "${HF_CSV_NWAY_SHUFFLE_BUFFER}") \
+		$(if ${HF_CSV_NWAY_SHUFFLE_SEED},--nway-shuffle-seed "${HF_CSV_NWAY_SHUFFLE_SEED}") \
+		$(if ${HF_CSV_OVERWRITE},--overwrite)
+
 bouquet-data:
 	${PYTHON} ${REPOHOME}scripts/bouquet2moses.py \
 		--repo-id "${BOUQUET_REPO}" \
@@ -591,6 +610,27 @@ endif
 
 local-train-data: ${LOCAL_TRAIN_SRC} ${LOCAL_TRAIN_TRG}
 
+ifeq (${HF_CSV_NWAY_TRAIN},1)
+${LOCAL_TRAIN_SRC}: ${LOCAL_TRAINDATA_DEPENDENCIES}
+	@mkdir -p ${dir $@}
+	@echo ""                           > ${dir $@}README.md
+	@echo "# ${notdir ${TRAIN_BASE}}" >> ${dir $@}README.md
+	@echo ""                          >> ${dir $@}README.md
+	@echo "* direct N-way HF CSV training data" >> ${dir $@}README.md
+	@rm -f ${LOCAL_TRAIN_SRC} ${LOCAL_TRAIN_TRG}
+	${MAKE} HF_CSV_OVERWRITE=1 hf-csv-nway-train-data
+	@echo -n "* total size (${DATASET}): " >> ${dir $@}README.md
+	@cat ${LOCAL_TRAIN_SRC} | wc -l >> ${dir $@}README.md
+ifeq (${USE_REST_DEVDATA},1)
+	@if [ -e ${DEV_SRC}.notused.gz ]; then \
+	  echo "..... add unused devdata to training data"; \
+	  echo "* unused dev/test data is added to training data" >> ${dir $@}README.md; \
+	  ${GZIP} -cd < ${DEV_SRC}.notused.gz >> ${LOCAL_TRAIN_SRC}; \
+	  ${GZIP} -cd < ${DEV_TRG}.notused.gz >> ${LOCAL_TRAIN_TRG}; \
+	fi
+endif
+
+else
 ## add training data for each language combination
 ## and put it together in local space
 ${LOCAL_TRAIN_SRC}: ${LOCAL_TRAINDATA_DEPENDENCIES}
@@ -659,6 +699,8 @@ ifeq (${SHUFFLE_TRAINING_DATA},1)
 #	@rm -f ${LOCAL_TRAIN_SRC}.shuffled
 endif
 
+
+endif
 
 
 ## everything is done in the target above

@@ -32,8 +32,8 @@ GENERATE_SPM_VOC = 0
 
 # SPM_INPUT_SIZE  = 10000000
 # Default: 0 disables SentencePiece's input sampling and truncation
-SPM_INPUT_SIZE    = 0
-SPM_SHUFFLE_INPUT = 0
+SPM_INPUT_SIZE    ?= 0
+SPM_SHUFFLE_INPUT ?= 0
 
 # Choose whether to truncate input with head or pass through with cat.
 # Set SPM_INPUT_SIZE=0 to disable truncation and sentencepiece's input_sentence_size.

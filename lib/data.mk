@@ -390,7 +390,12 @@ bouquet-data:
 
 clean-data rawdata:
 ifdef HF_CSV_REPO
+ifneq (${HF_CSV_SKIP_PAIR_DATA},1)
 	@${MAKE} hf-csv-data
+endif
+ifeq (${USE_BOUQUET_DATA},1)
+	@${MAKE} bouquet-data
+endif
 else
 	@for s in ${SRCLANGS}; do \
 	  for t in ${TRGLANGS}; do \
@@ -724,8 +729,10 @@ endif
 ## add language labels to the source language
 ## if we have multiple target languages
 
+target-label-for = $(or $(strip $(foreach l,${TARGET_LABEL_BY_TRGLANG},$(if $(filter $1:%,$l),$(patsubst $1:%,%,$l),$(if $(filter $1=%,$l),$(patsubst $1=%,%,$l))))),$1)
+
 ifeq (${USE_TARGET_LABELS},1)
-  LABEL_SOURCE_DATA = | sed "s/^/>>${TRG}<< /"
+  LABEL_SOURCE_DATA = | sed "s/^/>>$(call target-label-for,${TRG})<< /"
 endif
 
 

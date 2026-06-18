@@ -1,9 +1,5 @@
-# Train a multilingual model from the private Hugging Face 16-language CSV
-# dataset and evaluate on dedicated BOUQuET dev testsets.
-#
-# Usage:
-#   make -f configs/en+tr+kmr-en+tr+kmr/hf-csv-synthetic.bouquet.transformer-big.mk -f Makefile MARIAN_GPUS=0 hf-csv-multilingual
-#   make -f configs/en+tr+kmr-en+tr+kmr/hf-csv-synthetic.bouquet.transformer-big.mk -f Makefile MARIAN_GPUS=0 data
+# Train an English-to-many multilingual model from the private Hugging Face
+# 16-language CSV dataset and evaluate on English-source BOUQuET dev data.
 
 export LANGS SRCLANGS TRGLANGS LANGPAIRSTR
 export HF_CSV_REPO HF_CSV_FILE HF_CSV_CORPUS HF_CSV_REVISION
@@ -24,7 +20,7 @@ export GPUJOB_HPC_MEM GPUJOB_SUBMIT
 LANGS       = en tr kmr de es fr el bg ru ka hy fa ar ckb ur
 SRCLANGS    = en
 TRGLANGS    = ${LANGS}
-LANGPAIRSTR = synthetic-15lang-bouquet-big
+LANGPAIRSTR = synthetic-en2n-bouquet
 
 HF_CSV_REPO     = TartarusXXX/synthetic-parallel-16lang-1-4m-gemini-3-1-flash-lite
 HF_CSV_FILE     = synthetic_parallel_16lang_1_4m_gemini_3_1_flash_lite.csv
@@ -34,40 +30,36 @@ HF_CSV_REVISION = main
 DATASET  = ${HF_CSV_CORPUS}
 TRAINSET = ${HF_CSV_CORPUS}
 
-# This CSV is N-way parallel. Build the local Marian train streams directly
-# from each CSV row instead of expanding the row into every language pair.
+# The cached train stream is already projected from English to every target
+# language with target labels on the source side.
 HF_CSV_NWAY_TRAIN = 1
 HF_CSV_NWAY_SOURCE_LANG = en
 HF_CSV_NWAY_SHUFFLE_BUFFER = 200000
 HF_CSV_NWAY_SHUFFLE_SEED = 1
 HF_CSV_SKIP_PAIR_DATA = 1
 
-# Use BOUQuET as the Marian validation set during training, with a dedicated
-# corpus per target language. BOUQuET does not provide standard Arabic in this
-# split, so ar stays in training and Levantine/Egyptian Arabic references are
-# evaluated with the trained Arabic target label.
-EVAL_LANGS = en tr kmr de es fr el bg ru ka hy fa ckb ur apc arz
+EVAL_LANGS = tr kmr de es fr el bg ru ka hy fa ckb ur apc arz
 USE_BOUQUET_DATA = 1
 BOUQUET_LANGS = tur_Latn:tr eng_Latn:en deu_Latn:de spa_Latn:es fra_Latn:fr ell_Grek:el bul_Cyrl:bg rus_Cyrl:ru kat_Geor:ka hye_Armn:hy pes_Arab:fa ckb_Arab:ckb urd_Arab:ur kmr_Latn:kmr apc_Arab:apc arz_Arab:arz
-BOUQUET_SRCLANGS = ${EVAL_LANGS}
+BOUQUET_SRCLANGS = en
 BOUQUET_TRGLANGS = ${EVAL_LANGS}
 TARGET_LABEL_BY_TRGLANG = apc:ar arz:ar
+
 DEVSET   = bouquet-dev-en2n
 DEVSET_NAME = bouquet-dev-en2n
 DEV_SRCLANGS = en
-DEV_TRGLANGS = tr kmr de es fr el bg ru ka hy fa ckb ur apc arz
-DEVSET_BY_TRGLANG = en:bouquet-dev-en tr:bouquet-dev-tr kmr:bouquet-dev-kmr de:bouquet-dev-de es:bouquet-dev-es fr:bouquet-dev-fr el:bouquet-dev-el bg:bouquet-dev-bg ru:bouquet-dev-ru ka:bouquet-dev-ka hy:bouquet-dev-hy fa:bouquet-dev-fa ckb:bouquet-dev-ckb ur:bouquet-dev-ur apc:bouquet-dev-apc arz:bouquet-dev-arz
+DEV_TRGLANGS = ${EVAL_LANGS}
+DEVSET_BY_TRGLANG = tr:bouquet-dev-en2n kmr:bouquet-dev-en2n de:bouquet-dev-en2n es:bouquet-dev-en2n fr:bouquet-dev-en2n el:bouquet-dev-en2n bg:bouquet-dev-en2n ru:bouquet-dev-en2n ka:bouquet-dev-en2n hy:bouquet-dev-en2n fa:bouquet-dev-en2n ckb:bouquet-dev-en2n ur:bouquet-dev-en2n apc:bouquet-dev-en2n arz:bouquet-dev-en2n
 KEEP_FULL_DEVSET = 1
 
-# Keep the same BOUQuET mapping for final test evaluation.
 TESTSET  = bouquet-dev-en2n
 TESTSET_NAME = bouquet-dev-en2n
 TEST_SRCLANGS = en
-TEST_TRGLANGS = tr kmr de es fr el bg ru ka hy fa ckb ur apc arz
-TESTSET_BY_TRGLANG = en:bouquet-dev-en tr:bouquet-dev-tr kmr:bouquet-dev-kmr de:bouquet-dev-de es:bouquet-dev-es fr:bouquet-dev-fr el:bouquet-dev-el bg:bouquet-dev-bg ru:bouquet-dev-ru ka:bouquet-dev-ka hy:bouquet-dev-hy fa:bouquet-dev-fa ckb:bouquet-dev-ckb ur:bouquet-dev-ur apc:bouquet-dev-apc arz:bouquet-dev-arz
+TEST_TRGLANGS = ${EVAL_LANGS}
+TESTSET_BY_TRGLANG = ${DEVSET_BY_TRGLANG}
 KEEP_FULL_TESTSET = 1
 
-MODELTYPE = transformer-big
+MODELTYPE = transformer
 PRE       = simple
 SUBWORDS  = spm
 CLEAN_TRAINDATA_TYPE = clean
@@ -76,12 +68,7 @@ CLEAN_TESTDATA_TYPE = clean
 
 SKIP_SAME_LANG = 1
 SHUFFLE_DATA = 1
-# Pair data is already shuffled; avoid the redundant global multilingual sort
-# because the 15-language aggregate is too large for /tmp scratch.
 SHUFFLE_MULTILINGUAL_DATA = 0
-# The expanded N-way corpus is already shuffled enough for subword training.
-# Avoid an extra random sort in SentencePiece preprocessing and keep the
-# temporary SPM text sample bounded.
 DATA_IS_SHUFFLED = 1
 SPM_INPUT_SIZE = 10000000
 USE_REST_DEVDATA = 1

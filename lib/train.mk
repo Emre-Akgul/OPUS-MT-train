@@ -21,49 +21,34 @@ endif
 ${WORKDIR}/${MODEL}.trg.vocab: ${SUBWORD_TRG_MODEL}
 	cut -f1 < $<.vocab > $@
 
-
+ifneq ($(strip ${MODEL_LATEST_VOCAB}),)
+  MODEL_VOCAB_PREREQS = ${MODEL_LATEST_VOCAB}
+else
 ifneq ($(findstring spm,${SUBWORDS}),)
+  MODEL_VOCAB_PREREQS = ${WORKDIR}/${MODEL}.src.vocab ${WORKDIR}/${MODEL}.trg.vocab
+else
+  MODEL_VOCAB_PREREQS = ${TRAIN_SRC}.clean.${PRE_SRC}${TRAINSIZE}.gz \
+			${TRAIN_TRG}.clean.${PRE_TRG}${TRAINSIZE}.gz
+endif
+endif
 
-## make vocabulary from the source and target language specific
-## sentence piece models (concatenate and yamlify)
-
-${WORKDIR}/${MODEL}.vocab.yml: ${WORKDIR}/${MODEL}.src.vocab ${WORKDIR}/${MODEL}.trg.vocab
+${WORKDIR}/${MODEL}.vocab.yml: ${MODEL_VOCAB_PREREQS}
 ifeq ($(wildcard $@),)
-ifneq ($(wildcard ${MODEL_LATEST_VOCAB}),)
+ifneq ($(strip ${MODEL_LATEST_VOCAB}),)
 ifneq (${MODEL_LATEST_VOCAB},$@)
 	cp ${MODEL_LATEST_VOCAB} $@
 endif
 else
+ifneq ($(findstring spm,${SUBWORDS}),)
 	cat $^ | sort -u | ${REPOHOME}scripts/vocab2yaml.py > $@
-endif
-else
-	@echo "$@ already exists! We will re-use it ..."
-	touch $@
-endif
-
-else
-
-## fallback: make vocabulary from the training data
-## - no new vocabulary is created if the file already exists!
-## - need to delete the file if you want to create a new one!
-
-${WORKDIR}/${MODEL}.vocab.yml:	${TRAIN_SRC}.clean.${PRE_SRC}${TRAINSIZE}.gz \
-				${TRAIN_TRG}.clean.${PRE_TRG}${TRAINSIZE}.gz
-ifeq ($(wildcard $@),)
-ifneq ($(wildcard ${MODEL_LATEST_VOCAB}),)
-ifneq (${MODEL_LATEST_VOCAB},$@)
-	cp ${MODEL_LATEST_VOCAB} $@
-endif
 else
 	mkdir -p ${dir $@}
 	${LOAD_ENV} && ${ZCAT} $^ | ${MARIAN_VOCAB} --max-size ${VOCABSIZE} > $@
 endif
-else
-	@echo "$@ already exists!"
-	@echo "WARNING! No new vocabulary is created even though the data has changed!"
-	@echo "WARNING! Delete the file if you want to start from scratch!"
-	touch $@
 endif
+else
+	@echo "$@ already exists! We will re-use it ..."
+	touch $@
 endif
 
 
@@ -150,7 +135,8 @@ endif
 
 # start weights with a pre-trained model
 
-ifneq (${wildcard ${PRE_TRAINED_MODEL}},)
+ifneq ($(strip ${PRE_TRAINED_MODEL}),)
+  MARIAN_TRAIN_PREREQS += ${PRE_TRAINED_MODEL}
   MARIAN_EXTRA += --pretrained-model ${PRE_TRAINED_MODEL}
 endif
 

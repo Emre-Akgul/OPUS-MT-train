@@ -225,6 +225,46 @@ DATA_TRG := ${sort ${CLEAN_TRAIN_TRG} ${CLEAN_DEV_TRG} ${CLEAN_TEST_TRG}}
 
 
 ##-------------------------------------------------------------
+## Hugging Face Marian/OPUS-MT model used for fine-tuning
+##-------------------------------------------------------------
+
+.PHONY: hf-marian-model refresh-hf-marian-model
+
+ifdef HF_MARIAN_MODEL_REPO
+hf-marian-model: ${HF_MARIAN_MODEL_NPZ} ${HF_MARIAN_MODEL_VOCAB} ${HF_MARIAN_SOURCE_SPM} ${HF_MARIAN_TARGET_SPM}
+
+refresh-hf-marian-model:
+	rm -f ${HF_MARIAN_MODEL_STAMP}
+	${MAKE} HF_MARIAN_OVERWRITE=1 hf-marian-model
+
+${HF_MARIAN_MODEL_STAMP}: ${REPOHOME}scripts/download_hf_marian_model.py
+	mkdir -p ${HF_MARIAN_MODEL_DIR}
+	${PYTHON} ${REPOHOME}scripts/download_hf_marian_model.py \
+		--repo-id "${HF_MARIAN_MODEL_REPO}" \
+		--revision "${HF_MARIAN_MODEL_REVISION}" \
+		--output-dir "${HF_MARIAN_MODEL_DIR}" \
+		--token-env "${HF_MARIAN_TOKEN_ENV}" \
+		--env-file "${HF_MARIAN_ENV_FILE}" \
+		$(if ${HF_MARIAN_MODEL_FILE},--model "${HF_MARIAN_MODEL_FILE}",) \
+		$(if ${HF_MARIAN_VOCAB_FILE},--vocab "${HF_MARIAN_VOCAB_FILE}",) \
+		$(if ${HF_MARIAN_SOURCE_SPM_FILE},--source-spm "${HF_MARIAN_SOURCE_SPM_FILE}",) \
+		$(if ${HF_MARIAN_TARGET_SPM_FILE},--target-spm "${HF_MARIAN_TARGET_SPM_FILE}",) \
+		$(if ${HF_MARIAN_DECODER_FILE},--decoder "${HF_MARIAN_DECODER_FILE}",) \
+		$(if ${HF_MARIAN_CONFIG_FILE},--config "${HF_MARIAN_CONFIG_FILE}",) \
+		$(if $(filter 1,$(HF_MARIAN_OVERWRITE)),--overwrite,)
+	touch $@
+
+${HF_MARIAN_MODEL_NPZ} ${HF_MARIAN_MODEL_VOCAB} ${HF_MARIAN_SOURCE_SPM} ${HF_MARIAN_TARGET_SPM}: ${HF_MARIAN_MODEL_STAMP}
+	@test -s $@ || (echo "Missing staged HF Marian model file: $@. Run 'make refresh-hf-marian-model'." >&2; exit 1)
+else
+hf-marian-model:
+	@echo "Set HF_MARIAN_MODEL_REPO to download a Hugging Face Marian model."
+
+refresh-hf-marian-model: hf-marian-model
+endif
+
+
+##-------------------------------------------------------------
 ## make data in reverse direction without re-doing word alignment etc ...
 ## ---> this is dangerous when things run in parallel
 ## ---> only works for bilingual models

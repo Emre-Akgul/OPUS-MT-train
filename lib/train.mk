@@ -99,6 +99,15 @@ MARIAN_TRAIN_PREREQS = 	${TRAIN_SRC}.clean.${PRE_SRC}${TRAINSIZE}.gz \
 			${TRAIN_TRG}.clean.${PRE_TRG}${TRAINSIZE}.gz \
 			$(sort ${MODEL_SRCVOCAB} ${MODEL_TRGVOCAB})
 
+ifeq (${MARIAN_NAMED_VALIDATION},1)
+  MARIAN_VALID_METRICS = translation
+  MARIAN_BEST_VALID_METRIC = translation
+  MARIAN_NAMED_VALIDATION_FLAGS = \
+	--valid-script-path ${REPOHOME}scripts/validate_named_sets.py \
+	--valid-script-args ${NAMED_VALIDATION_MANIFEST} ${DEV_TRG}.${PRE_TRG} ${NAMED_VALIDATION_LOG} ${NAMED_VALIDATION_RETURN_METRIC} ${NAMED_VALIDATION_AGGREGATE} \
+	--valid-translation-output ${NAMED_VALIDATION_TRANSLATION_OUTPUT}
+endif
+
 
 ## define validation and early-stopping parameters
 ## as well as pre-requisites for training the model
@@ -106,10 +115,14 @@ MARIAN_TRAIN_PREREQS = 	${TRAIN_SRC}.clean.${PRE_SRC}${TRAINSIZE}.gz \
 
 ifndef SKIP_VALIDATION
   MARIAN_TRAIN_PREREQS += ${DEV_SRC}.${PRE_SRC} ${DEV_TRG}.${PRE_TRG}
+ifeq (${MARIAN_NAMED_VALIDATION},1)
+  MARIAN_TRAIN_PREREQS += ${NAMED_VALIDATION_MANIFEST}
+endif
   MARIAN_STOP_CRITERIA = --early-stopping ${MARIAN_EARLY_STOPPING} \
         --valid-freq ${MARIAN_VALID_FREQ} \
         --valid-sets ${DEV_SRC}.${PRE_SRC} ${DEV_TRG}.${PRE_TRG} \
         --valid-metrics ${MARIAN_VALID_METRICS} \
+	${MARIAN_NAMED_VALIDATION_FLAGS} \
         --valid-mini-batch ${MARIAN_VALID_MINI_BATCH} \
 	--valid-max-length 100 \
 	--valid-log ${WORKDIR}/${MODEL}.${MODELTYPE}.valid${NR}.log \

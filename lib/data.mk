@@ -865,6 +865,9 @@ ${DEV_SRC}.shuffled.gz:
 ifeq (${HF_CSV_NWAY_DEVTEST},1)
 	mkdir -p ${sort ${dir $@} ${dir ${DEV_SRC}} ${dir ${DEV_TRG}}}
 	rm -f ${DEV_SRC} ${DEV_TRG} ${DEV_SRC}.nway.tmp ${DEV_TRG}.nway.tmp
+ifeq (${MARIAN_NAMED_VALIDATION}:${NAMED_VALIDATION_AUTO_MANIFEST},1:1)
+	rm -f ${NAMED_VALIDATION_MANIFEST}
+endif
 	echo "# Validation data"                         > ${dir ${DEV_SRC}}README.md
 	echo ""                                         >> ${dir ${DEV_SRC}}README.md
 	echo "* direct N-way HF CSV dev/test data"      >> ${dir ${DEV_SRC}}README.md
@@ -875,6 +878,10 @@ ifeq (${HF_CSV_NWAY_DEVTEST},1)
 		LOCAL_TRAIN_TRG="${DEV_TRG}.nway.tmp" \
 		HF_CSV_NWAY_METADATA="${dir ${DEV_SRC}}${DEVSET_NAME}.nway-metadata.json" \
 		hf-csv-nway-train-data
+ifeq (${MARIAN_NAMED_VALIDATION}:${NAMED_VALIDATION_AUTO_MANIFEST},1:1)
+	printf "name\tstart\tend\n" > ${NAMED_VALIDATION_MANIFEST}
+	printf "%s\t0\t%s\n" "${DEVSET_NAME}" "$$(wc -l < ${DEV_SRC}.nway.tmp)" >> ${NAMED_VALIDATION_MANIFEST}
+endif
 ifeq (${SHUFFLE_DEVDATA},0)
 	paste ${DEV_SRC}.nway.tmp ${DEV_TRG}.nway.tmp | ${GZIP} -c > $@
 else
@@ -886,8 +893,14 @@ endif
 else
 	mkdir -p ${sort ${dir $@} ${dir ${DEV_SRC}} ${dir ${DEV_TRG}}}
 	rm -f ${DEV_SRC} ${DEV_TRG}
+ifeq (${MARIAN_NAMED_VALIDATION}:${NAMED_VALIDATION_AUTO_MANIFEST},1:1)
+	rm -f ${NAMED_VALIDATION_MANIFEST}
+endif
 	echo "# Validation data"                         > ${dir ${DEV_SRC}}README.md
 	echo ""                                         >> ${dir ${DEV_SRC}}README.md
+ifeq (${MARIAN_NAMED_VALIDATION}:${NAMED_VALIDATION_AUTO_MANIFEST},1:1)
+	printf "name\tstart\tend\n" > ${NAMED_VALIDATION_MANIFEST}
+endif
 		-for s in ${DEV_SRCLANGS}; do \
 		  for t in ${DEV_TRGLANGS}; do \
 	    if [ ! `echo "$$s-$$t $$t-$$s" | egrep '${SKIP_LANGPAIRS}' | wc -l` -gt 0 ]; then \
@@ -918,6 +931,9 @@ else
 				CLEAN_DEVDATA_TYPE="${CLEAN_DEVDATA_TYPE}" \
 				CLEAN_TESTDATA_TYPE="${CLEAN_TESTDATA_TYPE}" \
 				FIT_DEVDATA_SIZE="${FIT_DEVDATA_SIZE}" \
+				MARIAN_NAMED_VALIDATION="${MARIAN_NAMED_VALIDATION}" \
+				NAMED_VALIDATION_MANIFEST="${NAMED_VALIDATION_MANIFEST}" \
+				NAMED_VALIDATION_AUTO_MANIFEST="${NAMED_VALIDATION_AUTO_MANIFEST}" \
 				add-to-dev-data; \
 	      fi \
 	    else \
@@ -1008,6 +1024,9 @@ endif
 ${DEV_TRG}: ${DEV_SRC}
 	@echo "done!"
 
+${NAMED_VALIDATION_MANIFEST}: ${DEV_SRC}
+	@test -e $@ || (echo "Missing named validation manifest: $@" >&2; exit 1)
+
 .PHONY: add-to-dev-data
 add-to-dev-data: ${CLEAN_DEV_SRC} ${CLEAN_DEV_TRG}
 	@echo "add to devset: ${CLEAN_DEV_SRC}"
@@ -1020,13 +1039,23 @@ add-to-dev-data: ${CLEAN_DEV_SRC} ${CLEAN_DEV_TRG}
 #-----------------------------------------------------------------
 ifdef FIT_DEVDATA_SIZE
 	@echo "sample dev data to fit size = ${FIT_DEVDATA_SIZE}"
-	@${REPOHOME}scripts/fit-data-size.pl -m ${MAX_OVER_SAMPLING} ${FIT_DEVDATA_SIZE} \
-		${CLEAN_DEV_SRC} 2>/dev/null ${LABEL_SOURCE_DATA} >> ${DEV_SRC}
-	@${REPOHOME}scripts/fit-data-size.pl -m ${MAX_OVER_SAMPLING} ${FIT_DEVDATA_SIZE} \
-		${CLEAN_DEV_TRG} 2>/dev/null                      >> ${DEV_TRG}
+	@dev_start=$$(test -e ${DEV_SRC} && wc -l < ${DEV_SRC} || echo 0); \
+	  ${REPOHOME}scripts/fit-data-size.pl -m ${MAX_OVER_SAMPLING} ${FIT_DEVDATA_SIZE} \
+		${CLEAN_DEV_SRC} 2>/dev/null ${LABEL_SOURCE_DATA} >> ${DEV_SRC}; \
+	  ${REPOHOME}scripts/fit-data-size.pl -m ${MAX_OVER_SAMPLING} ${FIT_DEVDATA_SIZE} \
+		${CLEAN_DEV_TRG} 2>/dev/null                      >> ${DEV_TRG}; \
+	  dev_end=$$(wc -l < ${DEV_SRC}); \
+	  if [ "${MARIAN_NAMED_VALIDATION}" = "1" ] && [ "${NAMED_VALIDATION_AUTO_MANIFEST}" = "1" ]; then \
+	    printf "%s\t%s\t%s\n" "${LANGPAIR}:${DEVSET}" "$$dev_start" "$$dev_end" >> ${NAMED_VALIDATION_MANIFEST}; \
+	  fi
 else
-	@${GZCAT} ${CLEAN_DEV_SRC} 2>/dev/null ${LABEL_SOURCE_DATA} >> ${DEV_SRC}
-	@${GZCAT} ${CLEAN_DEV_TRG} 2>/dev/null                      >> ${DEV_TRG}
+	@dev_start=$$(test -e ${DEV_SRC} && wc -l < ${DEV_SRC} || echo 0); \
+	  ${GZCAT} ${CLEAN_DEV_SRC} 2>/dev/null ${LABEL_SOURCE_DATA} >> ${DEV_SRC}; \
+	  ${GZCAT} ${CLEAN_DEV_TRG} 2>/dev/null                      >> ${DEV_TRG}; \
+	  dev_end=$$(wc -l < ${DEV_SRC}); \
+	  if [ "${MARIAN_NAMED_VALIDATION}" = "1" ] && [ "${NAMED_VALIDATION_AUTO_MANIFEST}" = "1" ]; then \
+	    printf "%s\t%s\t%s\n" "${LANGPAIR}:${DEVSET}" "$$dev_start" "$$dev_end" >> ${NAMED_VALIDATION_MANIFEST}; \
+	  fi
 endif
 
 

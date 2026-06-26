@@ -162,7 +162,11 @@ ifneq (${wildcard ${SPM_MODEL}},)
 	touch -r $@ $<
 else
 	mkdir -p ${dir $@}
-	cat ${LOCAL_TRAIN_TRG} | ${SPM_PREPROCESS} | $(SPM_HEAD_HALF) > ${LOCAL_TRAIN}.tmp
+ifeq (${USE_TARGET_LABELS},1)
+	cut -f2- -d ' ' ${LOCAL_TRAIN_SRC} | ${SPM_PREPROCESS} | $(SPM_HEAD_HALF) > ${LOCAL_TRAIN}.tmp
+else
+	cat ${LOCAL_TRAIN_SRC} | ${SPM_PREPROCESS} | $(SPM_HEAD_HALF) > ${LOCAL_TRAIN}.tmp
+endif
 	cat ${LOCAL_TRAIN_TRG} | ${SPM_PREPROCESS} | $(SPM_HEAD_HALF) >> ${LOCAL_TRAIN}.tmp
 	${SHUFFLE} < ${LOCAL_TRAIN}.tmp > ${LOCAL_TRAIN}.text
 	rm -f ${LOCAL_TRAIN}.tmp

@@ -342,6 +342,11 @@ ${WORKDIR}/train/size_per_language_pair.txt: ${LOCAL_TRAINDATA_DEPENDENCIES}
 
 
 
+HF_CSV_SRCLANGS ?= ${SRCLANGS}
+HF_CSV_TRGLANGS ?= ${TRGLANGS}
+HF_CSV_REVISION ?= main
+HF_CSV_NWAY_METADATA ?= ${WORKDIR}/train/${DATASET}.nway-metadata.json
+
 .PHONY: clean-data rawdata hf-csv-data bouquet-data
 hf-csv-data:
 ifndef HF_CSV_REPO
@@ -351,6 +356,8 @@ endif
 		--repo-id "${HF_CSV_REPO}" \
 		$(if ${HF_CSV_FILE},--filename "${HF_CSV_FILE}") \
 		--revision "${HF_CSV_REVISION}" \
+		$(if ${HF_CSV_DELIMITER},--delimiter "${HF_CSV_DELIMITER}") \
+		$(if ${HF_CSV_ENCODING},--encoding "${HF_CSV_ENCODING}") \
 		--src-langs ${HF_CSV_SRCLANGS} \
 		--trg-langs ${HF_CSV_TRGLANGS} \
 		--corpus "${HF_CSV_CORPUS}" \
@@ -365,12 +372,18 @@ endif
 		--repo-id "${HF_CSV_REPO}" \
 		$(if ${HF_CSV_FILE},--filename "${HF_CSV_FILE}") \
 		--revision "${HF_CSV_REVISION}" \
+		$(if ${HF_CSV_DELIMITER},--delimiter "${HF_CSV_DELIMITER}") \
+		$(if ${HF_CSV_ENCODING},--encoding "${HF_CSV_ENCODING}") \
 		--src-langs ${HF_CSV_SRCLANGS} \
 		--trg-langs ${HF_CSV_TRGLANGS} \
 		--corpus "${HF_CSV_CORPUS}" \
 		--nway-train-src "${LOCAL_TRAIN_SRC}" \
 		--nway-train-trg "${LOCAL_TRAIN_TRG}" \
+		--nway-mode one-to-many \
+		--nway-metadata "${HF_CSV_NWAY_METADATA}" \
 		$(if ${HF_CSV_NWAY_SOURCE_LANG},--nway-source-lang "${HF_CSV_NWAY_SOURCE_LANG}") \
+		$(if ${TARGET_LABEL_BY_TRGLANG},--target-label-map ${TARGET_LABEL_BY_TRGLANG}) \
+		$(if $(filter 1,${SKIP_SAME_LANG}),--skip-same-lang) \
 		$(if ${HF_CSV_NWAY_SHUFFLE_BUFFER},--nway-shuffle-buffer "${HF_CSV_NWAY_SHUFFLE_BUFFER}") \
 		$(if ${HF_CSV_NWAY_SHUFFLE_SEED},--nway-shuffle-seed "${HF_CSV_NWAY_SHUFFLE_SEED}") \
 		$(if ${HF_CSV_OVERWRITE},--overwrite)
@@ -612,6 +625,12 @@ ifneq ($(words ${SRCLANGS} ${TRGLANGS}),2)
   SHUFFLE_TRAINING_DATA = 1
 endif
 endif
+ifeq (${HF_CSV_NWAY_TRAIN},1)
+ifneq (${HF_CSV_NWAY_SHUFFLE_BUFFER},)
+  DATA_IS_SHUFFLED = 1
+  SHUFFLE_TRAINING_DATA = 0
+endif
+endif
 
 local-train-data: ${LOCAL_TRAIN_SRC} ${LOCAL_TRAIN_TRG}
 
@@ -842,6 +861,28 @@ raw-devdata: ${DEV_SRC} ${DEV_TRG}
 ## maybe introduce over/undersampling of dev data like we have for train data?
 
 ${DEV_SRC}.shuffled.gz:
+ifeq (${HF_CSV_NWAY_DEVTEST},1)
+	mkdir -p ${sort ${dir $@} ${dir ${DEV_SRC}} ${dir ${DEV_TRG}}}
+	rm -f ${DEV_SRC} ${DEV_TRG} ${DEV_SRC}.nway.tmp ${DEV_TRG}.nway.tmp
+	echo "# Validation data"                         > ${dir ${DEV_SRC}}README.md
+	echo ""                                         >> ${dir ${DEV_SRC}}README.md
+	echo "* direct N-way HF CSV dev/test data"      >> ${dir ${DEV_SRC}}README.md
+	${MAKE} HF_CSV_OVERWRITE=1 \
+		HF_CSV_SRCLANGS="${DEV_SRCLANGS}" \
+		HF_CSV_TRGLANGS="${DEV_TRGLANGS}" \
+		LOCAL_TRAIN_SRC="${DEV_SRC}.nway.tmp" \
+		LOCAL_TRAIN_TRG="${DEV_TRG}.nway.tmp" \
+		HF_CSV_NWAY_METADATA="${dir ${DEV_SRC}}${DEVSET_NAME}.nway-metadata.json" \
+		hf-csv-nway-train-data
+ifeq (${SHUFFLE_DEVDATA},0)
+	paste ${DEV_SRC}.nway.tmp ${DEV_TRG}.nway.tmp | ${GZIP} -c > $@
+else
+	paste ${DEV_SRC}.nway.tmp ${DEV_TRG}.nway.tmp | ${UNIQ} | ${SHUFFLE} | ${GZIP} -c > $@
+endif
+	rm -f ${DEV_SRC}.nway.tmp ${DEV_TRG}.nway.tmp
+	echo -n "* total-size-shuffled: "            >> ${dir ${DEV_SRC}}README.md
+	${GZIP} -cd < $@ | wc -l                     >> ${dir ${DEV_SRC}}README.md
+else
 	mkdir -p ${sort ${dir $@} ${dir ${DEV_SRC}} ${dir ${DEV_TRG}}}
 	rm -f ${DEV_SRC} ${DEV_TRG}
 	echo "# Validation data"                         > ${dir ${DEV_SRC}}README.md
@@ -890,6 +931,7 @@ else
 endif
 	echo -n "* total-size-shuffled: "            >> ${dir ${DEV_SRC}}README.md
 	${GZIP} -cd < $@ | wc -l                     >> ${dir ${DEV_SRC}}README.md
+endif
 
 ## OLD: don't uniq the dev-data ...
 ##

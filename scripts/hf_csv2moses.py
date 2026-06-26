@@ -93,7 +93,7 @@ def parse_args():
     parser.add_argument(
         "--nway-mode",
         default="one-to-many",
-        choices=["one-to-many"],
+        choices=["one-to-many", "all-to-all"],
         help="Direct N-way projection mode. Default: one-to-many.",
     )
     parser.add_argument(
@@ -351,19 +351,30 @@ def parse_target_label_map(items):
     return label_map
 
 
-def nway_target_langs(args, source_lang, trg_langs):
-    if args.nway_mode != "one-to-many":
+def unique_in_order(items):
+    seen = set()
+    result = []
+    for item in items:
+        if item in seen:
+            continue
+        seen.add(item)
+        result.append(item)
+    return result
+
+
+def nway_pairs(args, source_lang, src_langs, trg_langs):
+    if args.nway_mode == "one-to-many":
+        pairs = [(source_lang, trg) for trg in trg_langs]
+    elif args.nway_mode == "all-to-all":
+        pairs = [(src, trg) for src in src_langs for trg in trg_langs]
+    else:
         raise SystemExit(f"Unsupported N-way mode: {args.nway_mode}")
-    target_langs = [
-        lang
-        for lang in trg_langs
-        if lang != source_lang or args.include_same_lang
-    ]
-    if args.skip_same_lang:
-        target_langs = [lang for lang in target_langs if lang != source_lang]
-    if not target_langs:
-        raise SystemExit("No N-way target languages selected.")
-    return target_langs
+
+    if not args.include_same_lang or args.skip_same_lang:
+        pairs = [(src, trg) for src, trg in pairs if src != trg]
+    if not pairs:
+        raise SystemExit("No N-way language pairs selected.")
+    return pairs
 
 
 def convert_csv(csv_path, args, corpus, src_langs, trg_langs):
@@ -463,7 +474,11 @@ def convert_nway_train(csv_path, args, src_langs, trg_langs):
         raise SystemExit("Set both --nway-train-src and --nway-train-trg.")
 
     source_lang = args.nway_source_lang or src_langs[0]
-    target_langs = nway_target_langs(args, source_lang, trg_langs)
+    pairs = nway_pairs(args, source_lang, src_langs, trg_langs)
+    pair_keys = [f"{src}-{trg}" for src, trg in pairs]
+    required_langs = sorted({lang for pair in pairs for lang in pair})
+    source_langs = unique_in_order(src for src, _ in pairs)
+    target_langs = unique_in_order(trg for _, trg in pairs)
     label_map = parse_target_label_map(args.target_label_map)
 
     src_path = Path(args.nway_train_src)
@@ -488,8 +503,12 @@ def convert_nway_train(csv_path, args, src_langs, trg_langs):
     tmp_metadata = (
         metadata_path.with_name(metadata_path.name + ".tmp") if metadata_path else None
     )
-    written = {lang: 0 for lang in target_langs}
-    skipped = {lang: 0 for lang in target_langs}
+    written = {pair: 0 for pair in pair_keys}
+    skipped = {pair: 0 for pair in pair_keys}
+    written_by_source = {lang: 0 for lang in source_langs}
+    written_by_target = {lang: 0 for lang in target_langs}
+    skipped_by_target = {lang: 0 for lang in target_langs}
+    skipped_source_empty_by_lang = {lang: 0 for lang in source_langs}
     skipped_source_empty = 0
     skipped_total = 0
     rng = random.Random(args.nway_shuffle_seed)
@@ -514,7 +533,7 @@ def convert_nway_train(csv_path, args, src_langs, trg_langs):
             trg_out.write(trg_text)
 
     try:
-        rows = csv_rows(csv_path, args, sorted(set([source_lang] + target_langs)))
+        rows = csv_rows(csv_path, args, required_langs)
         try:
             with (
                 tmp_src.open("w", encoding="utf-8") as src_out,
@@ -523,18 +542,23 @@ def convert_nway_train(csv_path, args, src_langs, trg_langs):
                 row_count = 0
                 for row in rows:
                     row_count += 1
-                    src_text = clean_cell(row.get(source_lang, ""))
-                    if not src_text and not args.keep_empty:
-                        skipped_source_empty += len(target_langs)
-                        skipped_total += len(target_langs)
-                        continue
-                    row_targets = list(target_langs)
+                    row_texts = {
+                        lang: clean_cell(row.get(lang, "")) for lang in required_langs
+                    }
+                    row_pairs = list(zip(pair_keys, pairs))
                     if args.nway_shuffle_buffer > 0:
-                        rng.shuffle(row_targets)
-                    for trg in row_targets:
-                        trg_text = clean_cell(row.get(trg, ""))
+                        rng.shuffle(row_pairs)
+                    for pair_key, (src, trg) in row_pairs:
+                        src_text = row_texts[src]
+                        if not args.keep_empty and not src_text:
+                            skipped_source_empty_by_lang[src] += 1
+                            skipped_source_empty += 1
+                            skipped_total += 1
+                            continue
+                        trg_text = row_texts[trg]
                         if not args.keep_empty and not trg_text:
-                            skipped[trg] += 1
+                            skipped[pair_key] += 1
+                            skipped_by_target[trg] += 1
                             skipped_total += 1
                             continue
                         label = label_map.get(trg, trg)
@@ -544,7 +568,9 @@ def convert_nway_train(csv_path, args, src_langs, trg_langs):
                             f">>{label}<< {src_text}\n",
                             trg_text + "\n",
                         )
-                        written[trg] += 1
+                        written[pair_key] += 1
+                        written_by_source[src] += 1
+                        written_by_target[trg] += 1
                 write_buffer(src_out, trg_out)
         finally:
             rows.close()
@@ -562,15 +588,21 @@ def convert_nway_train(csv_path, args, src_langs, trg_langs):
     os.replace(tmp_trg, trg_path)
     metadata = {
         "mode": args.nway_mode,
-        "source_lang": source_lang,
+        "source_lang": source_lang if args.nway_mode == "one-to-many" else None,
+        "source_langs": source_langs,
         "target_langs": target_langs,
+        "language_pairs": pair_keys,
         "target_label_map": label_map,
         "rows_read": row_count,
         "written_total": sum(written.values()),
-        "written_by_target": written,
+        "written_by_pair": written,
+        "written_by_source": written_by_source,
+        "written_by_target": written_by_target,
         "skipped_total": skipped_total,
         "skipped_source_empty": skipped_source_empty,
-        "skipped_by_target": skipped,
+        "skipped_source_empty_by_lang": skipped_source_empty_by_lang,
+        "skipped_by_pair": skipped,
+        "skipped_by_target": skipped_by_target,
         "shuffle_buffer": args.nway_shuffle_buffer,
         "shuffle_seed": args.nway_shuffle_seed,
         "source_path": str(src_path),
@@ -584,11 +616,17 @@ def convert_nway_train(csv_path, args, src_langs, trg_langs):
         os.replace(tmp_metadata, metadata_path)
 
     total = sum(written.values())
-    print(f"nway {source_lang}->targets: wrote {total} sentence pairs")
-    for lang in target_langs:
-        print(f"{source_lang}-{lang}: wrote {written[lang]} sentence pairs")
+    if args.nway_mode == "one-to-many":
+        print(f"nway {source_lang}->targets: wrote {total} sentence pairs")
+    else:
+        print(f"nway all-to-all: wrote {total} sentence pairs")
+    for pair_key in pair_keys:
+        print(f"{pair_key}: wrote {written[pair_key]} sentence pairs")
     if skipped_total:
-        print(f"nway {source_lang}->targets: skipped {skipped_total} empty examples")
+        if args.nway_mode == "one-to-many":
+            print(f"nway {source_lang}->targets: skipped {skipped_total} empty examples")
+        else:
+            print(f"nway all-to-all: skipped {skipped_total} empty examples")
     print(src_path)
     print(trg_path)
     if metadata_path:

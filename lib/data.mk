@@ -345,6 +345,7 @@ ${WORKDIR}/train/size_per_language_pair.txt: ${LOCAL_TRAINDATA_DEPENDENCIES}
 HF_CSV_SRCLANGS ?= ${SRCLANGS}
 HF_CSV_TRGLANGS ?= ${TRGLANGS}
 HF_CSV_REVISION ?= main
+HF_CSV_NWAY_MODE ?= one-to-many
 HF_CSV_NWAY_METADATA ?= ${WORKDIR}/train/${DATASET}.nway-metadata.json
 
 .PHONY: clean-data rawdata hf-csv-data bouquet-data
@@ -379,7 +380,7 @@ endif
 		--corpus "${HF_CSV_CORPUS}" \
 		--nway-train-src "${LOCAL_TRAIN_SRC}" \
 		--nway-train-trg "${LOCAL_TRAIN_TRG}" \
-		--nway-mode one-to-many \
+		--nway-mode "${HF_CSV_NWAY_MODE}" \
 		--nway-metadata "${HF_CSV_NWAY_METADATA}" \
 		$(if ${HF_CSV_NWAY_SOURCE_LANG},--nway-source-lang "${HF_CSV_NWAY_SOURCE_LANG}") \
 		$(if ${TARGET_LABEL_BY_TRGLANG},--target-label-map ${TARGET_LABEL_BY_TRGLANG}) \
